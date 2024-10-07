@@ -1,10 +1,10 @@
-import './App.css'
+import Hero from './components/Hero'
 
 function App() {
 
   return (
     <>
-    <h1 className='bg-red-200'>Hello</h1>
+      <Hero />
     </>
   )
 }
