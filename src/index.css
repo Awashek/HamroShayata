@@ -25,4 +25,10 @@ span {
   border-radius: 5px;
   color: #323232;
   cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btns:hover {
+  background-color: #1f5ea1; 
+  color: white;
 }
