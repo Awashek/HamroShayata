@@ -11,7 +11,6 @@ export default function Category() {
             <button className='btns'>Animals</button>
             </div>
             <div className='p-20'>
-
             </div>
         </div>
     )
