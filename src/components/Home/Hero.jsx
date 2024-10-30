@@ -16,7 +16,7 @@ export default function Hero() {
                 </div>
                 <div className="space-x-2 md:space-x-4">
                     <button className="text-white px-2 py-1 rounded hover:text-blue-400 md:px-4 md:py-2">
-                        Sign In
+                        Sign Up
                     </button>
                     <button className="bg-blue-600 text-white font-semibold px-3 py-1 rounded-md hover:bg-blue-700 md:px-4 md:py-2">
                         Start Fundraising
