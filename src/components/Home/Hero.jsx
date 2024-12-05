@@ -4,11 +4,11 @@ import logo from "../../assets/images/logo.png";
 
 export default function Hero() {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
-    const [activeTab, setActiveTab] = useState("signin"); // Default to "Sign In" tab
-    const [leftButtonText, setLeftButtonText] = useState("Sign In"); // Track button text on the left side
-    const [leftSideText, setLeftSideText] = useState("Already have an account? Log in");
+    const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
+    const [leftButtonText, setLeftButtonText] = useState("Sign Up"); // Track button text on the left side
+    const [leftSideText, setLeftSideText] = useState("Let's create an account");
 
-    const handleSignInClick = () => {
+    const handleLoginClick = () => {
         setShowSlider(true);
     };
 
@@ -17,14 +17,14 @@ export default function Hero() {
     };
 
     const handleLeftButtonClick = () => {
-        if (activeTab === "signin") {
-            setActiveTab("signup");
-            setLeftButtonText("Sign Up");
-            setLeftSideText("Let's create an account");
+        if (activeTab === "login") {
+            setActiveTab("signup"); // Switch to "Sign Up" tab
+            setLeftButtonText("Log In"); // Update button text
+            setLeftSideText("Let's get you logged in."); // Update left side text
         } else {
-            setActiveTab("signin");
-            setLeftButtonText("Sign In");
-            setLeftSideText("Let's get you loged in.");
+            setActiveTab("login"); // Switch to "Log In" tab
+            setLeftButtonText("Sign Up"); // Update button text
+            setLeftSideText("Let's create an account"); // Update left side text
         }
     };
 
@@ -41,9 +41,9 @@ export default function Hero() {
                 <div className="space-x-2 md:space-x-4">
                     <button
                         className="text-white px-2 py-1 rounded hover:text-blue-400 md:px-4 md:py-2"
-                        onClick={handleSignInClick}
+                        onClick={handleLoginClick}
                     >
-                        Sign In
+                        Log In
                     </button>
                     <button className="bg-blue-600 text-white font-medium px-3 py-1 rounded-lg hover:bg-blue-700 md:px-4 md:py-2">
                         Start Campaign
@@ -69,7 +69,7 @@ export default function Hero() {
                 </button>
             </div>
 
-            {/* Sign In/Sign Up Slider */}
+            {/* Log In/Sign Up Slider */}
             {showSlider && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
                     <div className="w-full max-w-4xl h-auto bg-white shadow-lg rounded-lg flex overflow-hidden relative">
@@ -83,7 +83,7 @@ export default function Hero() {
                         {/* Left Side - Welcome Back */}
                         <div className="w-full sm:w-1/2 bg-blue-500 flex flex-col justify-center items-center text-white p-6">
                             <h2 className="text-2xl font-bold mb-4">
-                                {activeTab === "signin" ? "Already have an account!" : "New, Here!"}
+                                {activeTab === "login" ? "New, Here" : "Already have an account!"}
                             </h2>
                             <p className="text-base text-center mb-6">
                                 {leftSideText}
@@ -92,13 +92,13 @@ export default function Hero() {
                                 className="border border-white text-white px-6 py-2 rounded-full hover:bg-white hover:text-blue-500 transition"
                                 onClick={handleLeftButtonClick}
                             >
-                                {leftButtonText} {/* Display either "Sign In" or "Sign Up" */}
+                                {leftButtonText} {/* Display either "Log In" or "Sign Up" */}
                             </button>
                         </div>
 
                         {/* Right Side - Form Section */}
                         <div className="w-full sm:w-1/2 flex flex-col justify-center items-center p-6">
-                            {activeTab === "signin" ? (
+                            {activeTab === "login" ? (
                                 <div className="w-full max-w-sm">
                                     <h2 className="text-2xl font-semibold mb-4 text-center text-blue-600">Login to HamroSahayata</h2>
                                     <form>
@@ -122,7 +122,7 @@ export default function Hero() {
                                             type="submit"
                                             className="w-full bg-blue-500 text-white py-2 rounded-full hover:bg-blue-600"
                                         >
-                                            Sign In
+                                            Log In
                                         </button>
                                     </form>
                                 </div>
