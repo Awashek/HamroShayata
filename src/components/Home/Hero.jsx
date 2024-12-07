@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import bgImage from "../../assets/images/background.jpg";
 import logo from "../../assets/images/logo.png";
+import LogIn from "../Login/Login";
+import SignUp from "../Signup/Signup";
 
 export default function Hero() {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
@@ -48,7 +50,6 @@ export default function Hero() {
                     <button className="bg-blue-600 text-white font-medium px-3 py-1 rounded-lg hover:bg-blue-700 md:px-4 md:py-2">
                         Start Campaign
                     </button>
-
                 </div>
             </div>
 
@@ -80,10 +81,10 @@ export default function Hero() {
                             ✖
                         </button>
 
-                        {/* Left Side - Welcome Back */}
+                        {/* Left Side */}
                         <div className="w-full sm:w-1/2 bg-blue-500 flex flex-col justify-center items-center text-white p-6">
                             <h2 className="text-2xl font-bold mb-4">
-                                {activeTab === "login" ? "New, Here" : "Already have an account!"}
+                                {activeTab === "login" ? "New Here?" : "Already have an account!"}
                             </h2>
                             <p className="text-base text-center mb-6">
                                 {leftSideText}
@@ -92,77 +93,13 @@ export default function Hero() {
                                 className="border border-white text-white px-6 py-2 rounded-full hover:bg-white hover:text-blue-500 transition"
                                 onClick={handleLeftButtonClick}
                             >
-                                {leftButtonText} {/* Display either "Log In" or "Sign Up" */}
+                                {leftButtonText}
                             </button>
                         </div>
 
-                        {/* Right Side - Form Section */}
+                        {/* Right Side */}
                         <div className="w-full sm:w-1/2 flex flex-col justify-center items-center p-6">
-                            {activeTab === "login" ? (
-                                <div className="w-full max-w-sm">
-                                    <h2 className="text-2xl font-semibold mb-4 text-center text-blue-600">Login to HamroSahayata</h2>
-                                    <form>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 mb-1">Email</label>
-                                            <input
-                                                type="email"
-                                                placeholder="Enter your email"
-                                                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 mb-1">Password</label>
-                                            <input
-                                                type="password"
-                                                placeholder="Enter your password"
-                                                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full bg-blue-500 text-white py-2 rounded-full hover:bg-blue-600"
-                                        >
-                                            Log In
-                                        </button>
-                                    </form>
-                                </div>
-                            ) : (
-                                <div className="w-full max-w-sm">
-                                    <h2 className="text-2xl font-semibold text-blue-600 text-center mb-4">Create a New Account</h2>
-                                    <form>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 mb-1">Name</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Enter your name"
-                                                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 mb-1">Email</label>
-                                            <input
-                                                type="email"
-                                                placeholder="Enter your email"
-                                                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 mb-1">Password</label>
-                                            <input
-                                                type="password"
-                                                placeholder="Enter your password"
-                                                className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full bg-blue-500 text-white py-2 rounded-full hover:bg-blue-600"
-                                        >
-                                            Sign Up
-                                        </button>
-                                    </form>
-                                </div>
-                            )}
+                            {activeTab === "login" ? <LogIn /> : <SignUp />}
                         </div>
                     </div>
                 </div>
