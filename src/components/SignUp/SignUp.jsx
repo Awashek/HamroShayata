@@ -31,7 +31,6 @@ export default function SignUp() {
         <div className="w-full max-w-sm">
             <h2 className="text-2xl font-semibold text-blue-600 text-center mb-4">Create a New Account</h2>
             <form onSubmit={handleSubmit}>
-                {/* First Name and Last Name Side by Side */}
                 <div className="flex gap-4 mb-4">
                     <div className="w-1/2">
                         <label className="block text-gray-700 mb-1">First Name</label>

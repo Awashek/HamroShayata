@@ -3,6 +3,7 @@ import bgImage from "../../assets/images/background.jpg";
 import logo from "../../assets/images/logo.png";
 import LogIn from "../Login/Login";
 import SignUp from "../Signup/Signup";
+import Category from "../Category/Category";
 
 export default function Hero() {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
@@ -104,6 +105,8 @@ export default function Hero() {
                     </div>
                 </div>
             )}
+            <Category />
         </div>
+        
     );
 }
