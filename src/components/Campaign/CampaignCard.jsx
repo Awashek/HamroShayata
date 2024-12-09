@@ -7,7 +7,7 @@ const CampaignCard = ({ title, category, goal, raised, donors, image, descriptio
     const progressBarColor = progressPercentage >= 100 ? 'bg-red-500' : 'bg-green-500';
 
     return (
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-sm p-4">
+        <div className="bg-white shadow-lg rounded-xl overflow-hidden w-full max-w-sm p-4">
             {/* Image Section */}
             <div>
                 <img src={image || "https://via.placeholder.com/400x300"} alt={title} className="w-full h-48 object-cover" />

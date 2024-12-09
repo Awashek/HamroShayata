@@ -34,8 +34,8 @@ function CampaignDetail({ campaign, creator, relatedCampaigns }) {
                 </div>
 
                 {/* Donate Button */}
-                <button class="cursor-pointer transition-all bg-blue-500 text-white px-20 align-middle py-2 rounded-lg border-blue-600 border-b-[4px] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:brightness-90 active:translate-y-[2px]">
-                    Donate
+                <button className="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white py-3 px-6 rounded-lg mt-4 hover:bg-blue-500 transition duration-300">
+                    Donate Now
                 </button>
 
                 {/* Comment Section */}
