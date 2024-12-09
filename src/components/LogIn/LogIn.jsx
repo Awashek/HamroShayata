@@ -68,14 +68,6 @@ export default function LogIn() {
                     Log In
                 </button>
             </form>
-            <div className="mt-4 text-center">
-                <a
-                    href="#"
-                    className="text-sm text-blue-500 hover:underline"
-                >
-                    Forgot Password?
-                </a>
-            </div>
         </div>
     );
 }
