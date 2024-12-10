@@ -7,7 +7,7 @@ function CampaignDetail({ campaign, creator, relatedCampaigns }) {
         progress >= 100 ? 'bg-red-500' : 'bg-green-500'; // Red when goal is reached, Green otherwise
 
     return (
-        <div className="flex flex-col lg:flex-row gap-8 p-6 bg-red-400 ">
+        <div className="flex flex-col lg:flex-row gap-8 p-6">
             {/* Left side: Campaign details */}
             <div className="lg:w-2/3 bg-white shadow-xl rounded-lg p-6">
                 <img
