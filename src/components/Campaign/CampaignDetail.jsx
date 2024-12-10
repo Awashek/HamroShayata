@@ -13,7 +13,7 @@ function CampaignDetail({ campaign, creator, relatedCampaigns }) {
                 <img
                     src={campaign.coverImage}
                     alt={campaign.title}
-                    className="w-full h-64 object-cover rounded-lg mb-4 shadow-md"
+                    className="w-full h-96 object-cover rounded-lg mb-4 shadow-md" // Increased height here (h-96)
                 />
                 <h2 className="text-3xl font-bold text-gray-800 mb-4">{campaign.title}</h2>
                 <p className="text-gray-600 text-lg mb-6">{campaign.description}</p>

@@ -64,11 +64,11 @@ const CampaignsList = () => {
             <h1 className="text-3xl font-bold text-center mb-4 mt-4 text-slate-700">
                 Campaigns Available for Donation
             </h1>
-            <div className="flex justify-center items-center gap-3 h-full pb-4">
-                <button className='btns'>Charity</button>
-                <button className='btns'>Animals</button>
-                <button className='btns'>Medical</button>
-                <button className='btns'>Personal</button>
+            <div className="flex flex-wrap justify-center items-center gap-3 h-full pb-4">
+                <button className='btns w-full sm:w-auto'>Charity</button>
+                <button className='btns w-full sm:w-auto'>Animals</button>
+                <button className='btns w-full sm:w-auto'>Medical</button>
+                <button className='btns w-full sm:w-auto'>Personal</button>
             </div>
             {/* Campaigns Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-6 lg:gap-x-1 px-4 border pb-100">
@@ -76,11 +76,10 @@ const CampaignsList = () => {
                     <CampaignCard key={index} {...campaign} />
                 ))}
             </div>
-
-
         </div>
     );
 };
+
 
 
 export default CampaignsList;
