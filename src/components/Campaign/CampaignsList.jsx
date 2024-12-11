@@ -29,39 +29,13 @@ const campaigns = [
         image: "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
         description: "Help us provide food and shelter to the homeless during this winter season.",
     },
-    {
-        title: "Charity for Homeless",
-        category: "Charity",
-        goal: 20000,
-        raised: 5000,
-        donors: 320,
-        image: "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
-        description: "Help us provide food and shelter to the homeless during this winter season.",
-    },
-    {
-        title: "Charity for Homeless",
-        category: "Charity",
-        goal: 20000,
-        raised: 5000,
-        donors: 320,
-        image: "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
-        description: "Help us provide food and shelter to the homeless during this winter season.",
-    },
-    {
-        title: "Charity for Homeless",
-        category: "Charity",
-        goal: 20000,
-        raised: 5000,
-        donors: 320,
-        image: "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
-        description: "Help us provide food and shelter to the homeless during this winter season.",
-    },
+
 ];
 
 const CampaignsList = () => {
     return (
         <div className="container mx-auto px-8 lg:px-16">
-            <h1 className="text-3xl font-bold text-center mb-4 mt-4 text-slate-700">
+            <h1 className="text-3xl font-semibold text-center mb-4 mt-4 text-slate-700">
                 Campaigns Available for Donation
             </h1>
             <div className="flex flex-wrap justify-center items-center gap-3 h-full pb-4">

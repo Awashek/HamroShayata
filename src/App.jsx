@@ -2,6 +2,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import CampaignDetail from './components/Campaign/CampaignDetail'
 import CampaignsList from './components/Campaign/CampaignsList'
 import Hero from './components/Home/Hero'
+import MainPage from './database/page';
 
 function App() {
   const sampleCampaign = {
@@ -9,7 +10,7 @@ function App() {
     coverImage: "https://via.placeholder.com/600x400",
     description: "This campaign aims to build a school in a rural area of Nepal.",
     goalAmount: 5000,
-    raisedAmount: 4500,
+    raisedAmount: 1245,
   };
 
   const creator = {
@@ -47,8 +48,9 @@ function App() {
         relatedCampaigns={relatedCampaigns}
       />
       <AdminDashboard />
+      <MainPage />
     </>
-    
+
   )
 }
 

@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "title": "Help Me Breathe Again",
+        "category": "Medical & Healing",
+        "goal": 5000,
+        "raised": 5000,
+        "donors": 76,
+        "image": "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
+        "description": "Hello everyone, I'm Emily Grace. I never imagined that COVID-19 would."
+    },
+    {
+        "id": 2,
+        "title": "Save the Whales",
+        "category": "Animals",
+        "goal": 10000,
+        "raised": 1000,
+        "donors": 150,
+        "image": "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
+        "description": "Join us in saving the whales. Every contribution matters to marine life."
+    },
+    {
+        "id": 3,
+        "title": "Charity for Homeless",
+        "category": "Charity",
+        "goal": 20000,
+        "raised": 5000,
+        "donors": 320,
+        "image": "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
+        "description": "Help us provide food and shelter to the homeless during this winter season."
+    }
+]
