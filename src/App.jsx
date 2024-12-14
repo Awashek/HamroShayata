@@ -3,6 +3,7 @@ import CampaignCard from './components/Campaign/CampaignCard';
 import CampaignDetail from './components/Campaign/CampaignDetail'
 import AdminDashboard from './components/Admin/AdminDashboard';
 import Category from './components/Category/Category';
+import Footer from './components/Footer/Footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 
@@ -16,6 +17,7 @@ function App() {
             <Hero />
             <Category />
             <CampaignCard />
+            <Footer />
           </>
         } />
 
