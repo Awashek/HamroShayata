@@ -50,7 +50,7 @@ function CampaignDetail() {
     return (
         <div className="flex flex-col lg:flex-row gap-8 p-6">
             {/* Left side: Campaign details */}
-            <div className="lg:w-2/3 bg-white shadow-xl rounded-lg p-6">
+            <div className="lg:w-2/3 bg-white shadow-xl rounded-lg p-6  border border-gray-200">
                 <img
                     src={fetchedCampaign.image}
                     alt={fetchedCampaign.title}

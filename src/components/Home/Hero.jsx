@@ -42,12 +42,12 @@ export default function Hero() {
                 </div>
                 <div className="space-x-2 md:space-x-4">
                     <button
-                        className="text-white px-2 py-1 rounded hover:text-blue-400 md:px-4 md:py-2"
+                        className="text-white px-2 py-1 rounded hover:text-[#1C9FDD] md:px-4 md:py-2"
                         onClick={handleLoginClick}
                     >
                         Log In
                     </button>
-                    <button className="bg-blue-600 text-white font-medium px-3 py-1 rounded-lg hover:bg-blue-700 md:px-4 md:py-2">
+                    <button className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2">
                         Start Campaign
                     </button>
                 </div>
@@ -65,7 +65,7 @@ export default function Hero() {
                     difference. Join us in empowering local causes and creating positive
                     change."
                 </p>
-                <button className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-blue-700 md:px-8 md:py-3">
+                <button className="bg-[#1C9FDD] text-white font-semibold px-6 py-2 rounded-md hover:hover:bg-[#1577A5] md:px-8 md:py-3">
                     Begin Your Journey!
                 </button>
             </div>

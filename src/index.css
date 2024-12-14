@@ -7,50 +7,63 @@ html {
 }
 
 * {
-    font-family: "Poppins", sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 span {
-    font-family: inherit;
-    font-weight: inherit;
+  font-family: inherit;
+  font-weight: inherit;
 }
 
- .btns {
+.btns {
   font-size: 18px;
-  color: rgb(76, 134, 201);
-  font-family: Poppins;
+  color: #3498db; /* Light blue text color */
+  font-family: 'Poppins', sans-serif;
   font-weight: 600;
   cursor: pointer;
   position: relative;
-  border: none;
-  background: none;
+  border: 2px solid #3498db; /* Border to match text color */
+  border-radius: 7px;
+  background: white; /* White background */
   text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 20px;
   transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   transition-duration: 400ms;
-  transition-property: color;
+  transition-property: color, background, transform, box-shadow;
+  overflow: hidden; /* Ensures the pseudo-element stays inside the button */
 }
 
 .btns:focus,
 .btns:hover {
-  color:rgb(33, 119, 199);
-}
-
-.btns:focus:after,
-.btns:hover:after {
-  width: 100%;
-  left: 0%;
+  color: white; /* Text color turns white on hover/focus */
+  background: #3498db; /* Blue background */
+  border-color: #2980b9; /* Darker blue border */
+  transform: translateY(-4px); /* Slight lift effect */
 }
 
 .btns:after {
   content: "";
   pointer-events: none;
-  bottom: -2px;
+  bottom: 0;
   left: 50%;
   position: absolute;
   width: 0%;
   height: 2px;
-  background-color: rgb(33, 119, 199);
+  background-color: #3498db;
   transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   transition-duration: 400ms;
   transition-property: width, left;
-} 
+  border-radius: 7px; /* Matching the button's border-radius */
+  transform: translateX(-50%); /* Centers the underline */
+}
+
+.btns:focus:after,
+.btns:hover:after {
+  width: 100%;
+  left: 50%;
+}
+
+.btns:hover {
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4), 0 6px 20px rgba(52, 152, 219, 0.3);
+}

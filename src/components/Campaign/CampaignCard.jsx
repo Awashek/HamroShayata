@@ -4,7 +4,7 @@ import data from '../../database/data.json';
 
 const CampaignCard = () => {
     return (
-        <div className="flex justify-center p-6">
+        <div className="flex justify-center p-6 ">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {data.map((campaign) => {
                     // Calculate progress percentage
