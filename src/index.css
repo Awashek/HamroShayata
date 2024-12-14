@@ -15,71 +15,7 @@ span {
     font-weight: inherit;
 }
 
-/* Category buttons */
-/* .btns {
-  padding: 10px 20px;
-  margin-right: 6px;
-  background: transparent;
-  border: none;
-  border: 0.6px solid #ccc;
-  border-radius: 5px;
-  color: #323232;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.btns:hover {
-  background-color: #1f5ea1; 
-  color: white;
-} */
-
-/* .btns {
-  font-size: 14px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  display: inline-block;
-  text-align: center;
-  font-weight: bold;
-  padding: 0.7em 2em;
-  border: 3px solid rgb(48, 112, 214);
-  border-radius: 2px;
-  position: relative;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.1);
-  color: rgb(48, 112, 214);
-  text-decoration: none;
-  transition: 0.3s ease all;
-  z-index: 1;
-}
-
-.btns:before {
-  transition: 0.5s all ease;
-  position: absolute;
-  top: 0;
-  left: 50%;
-  right: 50%;
-  bottom: 0;
-  opacity: 0;
-  content: '';
-  background-color: rgb(48, 112, 214);
-  z-index: -1;
-}
-
-.btns:hover, .btns:focus {
-  color: white;
-}
-
-.btns:hover:before, .btns:focus:before {
-  transition: 0.5s all ease;
-  left: 0;
-  right: 0;
-  opacity: 1;
-}
-
-.btns:active {
-  transform: scale(0.9);
-} */
-
-.btns {
+ .btns {
   font-size: 18px;
   color: rgb(76, 134, 201);
   font-family: Poppins;
@@ -117,5 +53,4 @@ span {
   transition-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   transition-duration: 400ms;
   transition-property: width, left;
-}
-
+} 
