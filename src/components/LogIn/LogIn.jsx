@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function LogIn() {
+const LogIn = () => {
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -32,7 +32,7 @@ export default function LogIn() {
 
     return (
         <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold mb-4 text-center text-blue-600">
+            <h2 className="text-2xl font-semibold mb-4 text-center text-[#1C9FDD]">
                 Login to HamroSahayata
             </h2>
             <form onSubmit={handleSubmit}>
@@ -63,7 +63,7 @@ export default function LogIn() {
                 {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                 <button
                     type="submit"
-                    className="w-full bg-blue-500 text-white py-2 rounded-full hover:bg-blue-600"
+                    className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
                 >
                     Log In
                 </button>
@@ -71,3 +71,5 @@ export default function LogIn() {
         </div>
     );
 }
+
+export default LogIn

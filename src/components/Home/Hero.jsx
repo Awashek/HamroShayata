@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import bgImage from "../../assets/images/background.jpg";
 import logo from "../../assets/images/logo.png";
-import LogIn from "../Login/Login";
-import SignUp from "../Signup/Signup";
+import LogIn from "../LogIn/LogIn.jsx";
+import SignUp from "../SignUp/SignUp.jsx";
 
-export default function Hero() {
+const Hero = () => {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
     const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
     const [leftButtonText, setLeftButtonText] = useState("Sign Up"); // Track button text on the left side
@@ -82,7 +82,7 @@ export default function Hero() {
                         </button>
 
                         {/* Left Side */}
-                        <div className="w-full sm:w-1/2 bg-blue-500 flex flex-col justify-center items-center text-white p-6">
+                        <div className="w-full sm:w-1/2 bg-[#1C9FDD] flex flex-col justify-center items-center text-white p-6">
                             <h2 className="text-2xl font-bold mb-4">
                                 {activeTab === "login" ? "New Here?" : "Already have an account!"}
                             </h2>
@@ -105,6 +105,8 @@ export default function Hero() {
                 </div>
             )}
         </div>
-        
+
     );
 }
+
+export default Hero

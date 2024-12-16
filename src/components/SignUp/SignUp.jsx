@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function SignUp() {
+const SignUp = () => {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -29,7 +29,7 @@ export default function SignUp() {
 
     return (
         <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold text-blue-600 text-center mb-4">Create a New Account</h2>
+            <h2 className="text-2xl font-semibold text-[#1C9FDD] text-center mb-4">Create a New Account</h2>
             <form onSubmit={handleSubmit}>
                 <div className="flex gap-4 mb-4">
                     <div className="w-1/2">
@@ -40,7 +40,7 @@ export default function SignUp() {
                             placeholder="First Name"
                             value={formData.firstName}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
                             required
                         />
                     </div>
@@ -52,7 +52,7 @@ export default function SignUp() {
                             placeholder="Last Name"
                             value={formData.lastName}
                             onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
                             required
                         />
                     </div>
@@ -65,7 +65,7 @@ export default function SignUp() {
                         placeholder="Enter your email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
                         required
                     />
                 </div>
@@ -77,7 +77,7 @@ export default function SignUp() {
                         placeholder="Enter your password"
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
                         required
                     />
                 </div>
@@ -89,14 +89,14 @@ export default function SignUp() {
                         placeholder="Re-enter your password"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
                         required
                     />
                 </div>
                 {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
                 <button
                     type="submit"
-                    className="w-full bg-blue-500 text-white py-2 rounded-full hover:bg-blue-600"
+                    className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
                 >
                     Sign Up
                 </button>
@@ -104,3 +104,5 @@ export default function SignUp() {
         </div>
     );
 }
+
+export default SignUp

@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import data from "../../database/data.json";
 import { useEffect, useState } from "react";
 
-function CampaignDetail() {
+const CampaignDetail = () => {
 
     const creator = {
         profileImage: "https://i.seadn.io/gcs/files/3085b3fc65f00b28699b43efb4434eec.png?auto=format&dpr=1&w=1000",
@@ -58,6 +58,9 @@ function CampaignDetail() {
                 />
                 <h2 className="text-3xl font-bold text-gray-800 mb-4">{fetchedCampaign.title}</h2>
                 <p className="text-gray-600 text-lg mb-6">{fetchedCampaign.description}</p>
+                <p className="text-gray-500 text-sm mb-4">
+                    {fetchedCampaign.donors} Donors
+                </p>
 
                 {/* Progress Bar */}
                 <div className="mb-4">

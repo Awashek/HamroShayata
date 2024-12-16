@@ -5,6 +5,7 @@ import AdminDashboard from './components/Admin/AdminDashboard';
 import Category from './components/Category/Category';
 import Footer from './components/Footer/Footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import UserProfile from './components/Users/UserProfile';
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         } />
 
         <Route path='admin' element={<AdminDashboard />} />
+        <Route path='userprofile' element={<UserProfile />} />
         <Route path='campaigns/:campaignId' element={<CampaignDetail
         />} />
       </Routes>
