@@ -16,14 +16,33 @@ const SignUp = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
             setError("Passwords do not match.");
-        } else {
-            setError(""); // Clear error message
-            console.log("Form Submitted Successfully:", formData);
-            // Add your API call or logic to handle form submission here
+            return;
+        }
+    
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/users/register/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: formData.email, // or any username logic
+                    email: formData.email,
+                    password: formData.password,
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                }),
+            });
+    
+            if (!response.ok) throw new Error("Failed to register");
+    
+            const data = await response.json();
+            console.log("Registration successful:", data);
+            alert("Account created successfully!");
+        } catch (error) {
+            setError("Registration failed. Please try again.");
         }
     };
 

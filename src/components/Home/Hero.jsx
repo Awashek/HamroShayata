@@ -3,7 +3,7 @@ import bgImage from "../../assets/images/background.jpg";
 import logo from "../../assets/images/logo.png";
 import LogIn from "../LogIn/LogIn.jsx";
 import SignUp from "../SignUp/SignUp.jsx";
-
+import CreateCampaignForm from "../Campaign/CreateCampaginForm.jsx";
 const Hero = () => {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
     const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
@@ -47,7 +47,8 @@ const Hero = () => {
                     >
                         Log In
                     </button>
-                    <button className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2">
+                    <button className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2"
+                    >
                         Start Campaign
                     </button>
                 </div>

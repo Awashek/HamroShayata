@@ -12,23 +12,29 @@ const LogIn = () => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        
-        if (!formData.email.includes("@")) {
-            setError("Please enter a valid email address.");
-            return;
+    
+        try {
+            const response = await fetch("http://127.0.0.1:8000/api/users/login/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+    
+            if (!response.ok) throw new Error("Invalid credentials");
+    
+            const data = await response.json();
+            console.log("Login successful:", data);
+            alert("Login successful!");
+        } catch (error) {
+            setError("Invalid credentials. Please try again.");
         }
-        if (formData.password.length < 6) {
-            setError("Password must be at least 6 characters long.");
-            return;
-        }
-
-        setError(""); // Clear error
-        console.log("Login Form Submitted:", formData);
-        // API calls and logic
     };
+    
 
     return (
         <div className="w-full max-w-sm">

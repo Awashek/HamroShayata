@@ -4,7 +4,7 @@
         "title": "Help Me Breathe Again",
         "category": "Medical",
         "goal": 5000,
-        "raised": 300,
+        "raised": 3000,
         "donors": 76,
         "image": "https://www.cidrap.umn.edu/sites/default/files/styles/article_detail/public/article/iStock-1371550663.jpg?itok=IFLe4xIY",
         "description": "Hello everyone, I'm Emily Grace. I never imagined that COVID-19 would."
@@ -14,7 +14,7 @@
         "title": "Save the Whales",
         "category": "Animals",
         "goal": 10000,
-        "raised": 1000,
+        "raised": 4700,
         "donors": 150,
         "image": "https://www.aims.gov.au/sites/default/files/styles/featured/public/2022-07/whales_2000px_banner-2.jpg?itok=sOy0UZhB",
         "description": "Join us in saving the whales. Every contribution matters to marine life."
@@ -24,8 +24,8 @@
         "title": "Charity for Homeless",
         "category": "Charity",
         "goal": 20000,
-        "raised": 5000,
-        "donors": 320,
+        "raised": 3500,
+        "donors": 3000,
         "image": "https://platform.vox.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/24762687/1252222592.jpg?quality=90&strip=all&crop=0%2C0%2C100%2C100&w=2400",
         "description": "Help us provide food and shelter to the homeless during this winter season."
     },
@@ -34,7 +34,7 @@
         "title": "Clean Water for All",
         "category": "Environment",
         "goal": 15000,
-        "raised": 7200,
+        "raised": 10000,
         "donors": 95,
         "image": "https://media.npr.org/assets/img/2017/06/07/india-pollution_custom-36fb50c6e26e115c6306aa95d9d9027cae8da90f.jpg",
         "description": "Help us bring clean water to communities in need. Every drop counts!"
