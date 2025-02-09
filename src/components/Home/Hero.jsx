@@ -4,6 +4,7 @@ import logo from "../../assets/images/logo.png";
 import LogIn from "../LogIn/LogIn.jsx";
 import SignUp from "../SignUp/SignUp.jsx";
 import CreateCampaignForm from "../Campaign/CreateCampaginForm.jsx";
+import { useNavigate } from "react-router-dom";
 const Hero = () => {
     const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
     const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
@@ -30,6 +31,11 @@ const Hero = () => {
         }
     };
 
+        const navigate = useNavigate();
+
+        const handleStartCampaignClick = () => {
+            navigate('/createcampaign');  // Navigates to the CreateCampaignForm page
+        };
     return (
         <div
             className="h-screen bg-cover bg-center relative"
@@ -47,7 +53,9 @@ const Hero = () => {
                     >
                         Log In
                     </button>
-                    <button className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2"
+                    <button 
+                    className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2"
+                    onClick={handleStartCampaignClick}
                     >
                         Start Campaign
                     </button>

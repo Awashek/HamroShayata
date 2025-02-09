@@ -47,6 +47,8 @@ const CampaignDetail = () => {
     // Social share URLs
     const shareUrl = encodeURIComponent(window.location.href); // Dynamically fetch the current URL
 
+    
+  
     return (
         <div className="flex flex-col lg:flex-row gap-8 p-6">
             {/* Left side: Campaign details */}
@@ -104,6 +106,7 @@ const CampaignDetail = () => {
                     <div className="flex items-center space-x-4">
                         <img
                             src={creator.profileImage}
+                            
                             alt={creator.name}
                             className="w-20 h-20 rounded-full shadow-lg"
                         />

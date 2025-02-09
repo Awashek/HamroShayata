@@ -1,14 +1,14 @@
-import Hero from './components/Home/Hero'
+import Hero from './components/Home/Hero';
 import CampaignCard from './components/Campaign/CampaignCard';
-import CampaignDetail from './components/Campaign/CampaignDetail'
+import CampaignDetail from './components/Campaign/CampaignDetail';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import Category from './components/Category/Category';
 import Footer from './components/Footer/Footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserProfile from './components/Users/UserProfile';
-import CreateCampaignForm from './components/Campaign/CreateCampaginForm';
-function App() {
+import CreateCampaignForm from './components/Campaign/CreateCampaginForm';  // Corrected import
 
+function App() {
   return (
     <Router>
       <Routes>
@@ -24,12 +24,10 @@ function App() {
         <Route path='admin' element={<AdminDashboard />} />
         <Route path='createcampaign' element={<CreateCampaignForm />} />
         <Route path='userprofile' element={<UserProfile />} />
-        <Route path='campaigns/:campaignId' element={<CampaignDetail
-        />} />
-        
+        <Route path='campaigns/:campaignId' element={<CampaignDetail />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

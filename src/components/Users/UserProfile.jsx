@@ -7,6 +7,7 @@ const UserProfile = () => {
             <div className="flex items-center space-x-6 mb-10">
                 
                     <img src="https://i.seadn.io/gcs/files/3085b3fc65f00b28699b43efb4434eec.png?auto=format&dpr=1&w=1000" alt="" 
+                    
                     className="w-20 h-20 rounded-full shadow-lg"/>
                 
                 <div>
