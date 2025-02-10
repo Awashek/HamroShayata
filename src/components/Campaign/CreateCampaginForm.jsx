@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+import Footer from "../Footer/Footer";
 const CreateCampaignForm = () => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -125,7 +125,7 @@ const CreateCampaignForm = () => {
                                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                             </div>
                             <div className="mt-4">
-                                <label className="block text-gray-700 font-medium mb-2">Goal Amount ($)</label>
+                                <label className="block text-gray-700 font-medium mb-2">Goal Amount (Rupees)</label>
                                 <input name="goalAmount" type="number" value={formData.goalAmount} onChange={handleChange} className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.goalAmount ? 'border-red-500' : ''}`} />
                                 {errors.goalAmount && <p className="text-red-500 text-sm mt-1">{errors.goalAmount}</p>}
                             </div>
@@ -149,6 +149,7 @@ const CreateCampaignForm = () => {
                             </div>
                         </div>
                     )}
+
                     <div className="flex justify-between mt-10">
                         {step > 1 && (
                             <button
@@ -168,18 +169,26 @@ const CreateCampaignForm = () => {
                                 Next
                             </button>
                         ) : (
-                            <button
-                                type="submit"  // Will only submit at step 3
-                                disabled={isSubmitting}
-                                className="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 transition-all duration-300"
-                            >
-                                {isSubmitting ? "Submitting..." : "Submit"}
-                            </button>
+                            <></>
+                        )}
+                        {step === 3 ? (
+                            <>
+                                <button
+                                    type="submit"
+                                    // Ke
+                                    className="bg-[#23c667] text-white py-2 px-6 rounded-lg hover:bg-[#0f7fb8] transition-all duration-300"
+                                >
+                                    {isSubmitting ? 'Submitting' : 'Submit'}
+                                </button>
+                            </>
+                        ) : (
+                            <></>
                         )}
                     </div>
                 </form>
             </div>
         </div>
+        
     );
 };
 

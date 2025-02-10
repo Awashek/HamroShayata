@@ -5,44 +5,46 @@ import LogIn from "../LogIn/LogIn.jsx";
 import SignUp from "../SignUp/SignUp.jsx";
 import CreateCampaignForm from "../Campaign/CreateCampaginForm.jsx";
 import { useNavigate } from "react-router-dom";
+import NavBar from "../Navbar/Navbar"; 
 const Hero = () => {
-    const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
-    const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
-    const [leftButtonText, setLeftButtonText] = useState("Sign Up"); // Track button text on the left side
-    const [leftSideText, setLeftSideText] = useState("Let's create an account");
+    // const [showSlider, setShowSlider] = useState(false); // State to toggle the slider
+    // const [activeTab, setActiveTab] = useState("login"); // Default to "Log In" tab
+    // const [leftButtonText, setLeftButtonText] = useState("Sign Up"); // Track button text on the left side
+    // const [leftSideText, setLeftSideText] = useState("Let's create an account");
 
-    const handleLoginClick = () => {
-        setShowSlider(true);
-    };
+    // const handleLoginClick = () => {
+    //     setShowSlider(true);
+    // };
 
-    const handleClose = () => {
-        setShowSlider(false); // Close the slider
-    };
+    // const handleClose = () => {
+    //     setShowSlider(false); // Close the slider
+    // };
 
-    const handleLeftButtonClick = () => {
-        if (activeTab === "login") {
-            setActiveTab("signup"); // Switch to "Sign Up" tab
-            setLeftButtonText("Log In"); // Update button text
-            setLeftSideText("Let's get you logged in."); // Update left side text
-        } else {
-            setActiveTab("login"); // Switch to "Log In" tab
-            setLeftButtonText("Sign Up"); // Update button text
-            setLeftSideText("Let's create an account"); // Update left side text
-        }
-    };
+    // const handleLeftButtonClick = () => {
+    //     if (activeTab === "login") {
+    //         setActiveTab("signup"); // Switch to "Sign Up" tab
+    //         setLeftButtonText("Log In"); // Update button text
+    //         setLeftSideText("Let's get you logged in."); // Update left side text
+    //     } else {
+    //         setActiveTab("login"); // Switch to "Log In" tab
+    //         setLeftButtonText("Sign Up"); // Update button text
+    //         setLeftSideText("Let's create an account"); // Update left side text
+    //     }
+    // };
 
-        const navigate = useNavigate();
+        // const navigate = useNavigate();
 
-        const handleStartCampaignClick = () => {
-            navigate('/createcampaign');  // Navigates to the CreateCampaignForm page
-        };
+        // const handleStartCampaignClick = () => {
+        //     navigate('/createcampaign');  // Navigates to the CreateCampaignForm page
+        // };
     return (
         <div
             className="h-screen bg-cover bg-center relative"
             style={{ backgroundImage: `url(${bgImage})` }}
         >
+            
             {/* Header Section */}
-            <div className="flex items-center justify-between absolute top-0 left-0 right-0 px-4 py-2 md:px-6 lg:px-12">
+            {/* <div className="flex items-center justify-between absolute top-0 left-0 right-0 px-4 py-2 md:px-6 lg:px-12">
                 <div>
                     <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
                 </div>
@@ -60,7 +62,7 @@ const Hero = () => {
                         Start Campaign
                     </button>
                 </div>
-            </div>
+            </div> */}
 
             {/* Main Content */}
             <div className="flex flex-col items-center justify-center text-center h-full bg-black bg-opacity-60 px-4">
@@ -78,8 +80,8 @@ const Hero = () => {
                     Begin Your Journey!
                 </button>
             </div>
-
-            {/* Log In/Sign Up Slider */}
+{/* 
+            {/* Log In/Sign Up Slider 
             {showSlider && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
                     <div className="w-full max-w-4xl h-auto bg-white shadow-lg rounded-lg flex overflow-hidden relative">
@@ -90,7 +92,7 @@ const Hero = () => {
                             ✖
                         </button>
 
-                        {/* Left Side */}
+                        {/* Left Side 
                         <div className="w-full sm:w-1/2 bg-[#1C9FDD] flex flex-col justify-center items-center text-white p-6">
                             <h2 className="text-2xl font-bold mb-4">
                                 {activeTab === "login" ? "New Here?" : "Already have an account!"}
@@ -106,13 +108,13 @@ const Hero = () => {
                             </button>
                         </div>
 
-                        {/* Right Side */}
+                        {/* Right Side *
                         <div className="w-full sm:w-1/2 flex flex-col justify-center items-center p-6">
                             {activeTab === "login" ? <LogIn /> : <SignUp />}
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
 
     );

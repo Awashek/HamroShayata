@@ -7,6 +7,7 @@ import Footer from './components/Footer/Footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserProfile from './components/Users/UserProfile';
 import CreateCampaignForm from './components/Campaign/CreateCampaginForm';  // Corrected import
+import Navbar from './components/Navbar/Navbar';
 
 function App() {
   return (
@@ -14,9 +15,13 @@ function App() {
       <Routes>
         <Route path='/' element={
           <>
+          
             <Hero />
             <Category />
+            
             <CampaignCard />
+            <Navbar />
+            
             <Footer />
           </>
         } />
