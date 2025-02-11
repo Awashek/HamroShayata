@@ -5,7 +5,7 @@ import LogIn from '../LogIn/LogIn';
 import SignUp from '../SignUp/SignUp'; // Import SignUp component
 
 const Navbar = () => {
-    const [showSlider, setShowSlider] = useState(false); 
+    const [showSlider, setShowSlider] = useState(false);
     const [activeTab, setActiveTab] = useState("login");
     const [leftButtonText, setLeftButtonText] = useState("Sign Up");
     const [leftSideText, setLeftSideText] = useState("Let's create an account");
@@ -37,26 +37,29 @@ const Navbar = () => {
     };
 
     return (
-        <div>
-            <div className="flex items-center justify-between absolute top-0 left-0 right-0 px-4 py-2 md:px-6 lg:px-12">
-                <div>
-                    <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
-                </div>
-                <div className="space-x-2 md:space-x-4">
-                    <button
-                        className="text-white px-2 py-1 rounded hover:text-[#1C9FDD] md:px-4 md:py-2"
-                        onClick={handleLoginClick}
-                    >
-                        Log In
-                    </button>
-                    <button
-                        className="bg-[#1C9FDD] text-white font-medium px-3 py-1 rounded-lg hover:bg-[#1577A5] md:px-4 md:py-2"
-                        onClick={handleStartCampaignClick}
-                    >
-                        Start Campaign
-                    </button>
-                </div>
+        <nav className="fixed top-0 left-0 right-0 bg-[#1C9FDD] shadow-md z-50 px-4 py-4 md:px-6 lg:px-12 flex items-center justify-between h-[80px]">
+            <div>
+                <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
             </div>
+            <div className="space-x-2 md:space-x-4">
+                {/* Log In Button */}
+                <button
+                    className="text-white font-semibold px-3 py-1 border border-white rounded-lg transition-all duration-300 hover:text-[#1C9FDD] hover:bg-white hover:shadow-lg md:px-5 md:py-2"
+                    onClick={handleLoginClick}
+                >
+                    Log In
+                </button>
+
+                {/* Start Campaign Button */}
+                <button
+                    className="bg-white text-[#1C9FDD] font-semibold px-4 py-1.5 rounded-lg shadow-md transition-all duration-300 hover:bg-[#1583BB] hover:text-white hover:shadow-lg md:px-6 md:py-2"
+                    onClick={handleStartCampaignClick}
+                >
+                    Start Campaign
+                </button>
+            </div>
+
+
 
             {showSlider && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -91,7 +94,7 @@ const Navbar = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </nav>
     );
 };
 
