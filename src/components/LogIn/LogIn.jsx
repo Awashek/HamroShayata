@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";  // Importing useNavigate
+import AuthContext from "../../context/Authcontext";
 
 const LogIn = () => {
+    const { loginUser } = useContext(AuthContext);
+    const navigate = useNavigate();  // Initializing navigate function
+
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -14,27 +19,29 @@ const LogIn = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
-        try {
-            const response = await fetch("http://127.0.0.1:8000/api/users/login/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password,
-                }),
-            });
-    
-            if (!response.ok) throw new Error("Invalid credentials");
-    
-            const data = await response.json();
-            console.log("Login successful:", data);
-            alert("Login successful!");
-        } catch (error) {
-            setError("Invalid credentials. Please try again.");
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+
+        if (email.length === 0) {
+            setError("Email is required");
+            return;
+        }
+
+        if (password.length === 0) {
+            setError("Password is required");
+            return;
+        }
+
+        // Call loginUser to perform the login action
+        const loginSuccess = await loginUser(email, password);
+
+        // If login is successful, navigate to home page (root route '/')
+        if (loginSuccess) {
+            navigate("/");  // Navigates to the home page, which is the root '/'
+        } else {
+            setError("Login failed. Please check your credentials.");
         }
     };
-    
 
     return (
         <div className="w-full max-w-sm">
@@ -76,6 +83,6 @@ const LogIn = () => {
             </form>
         </div>
     );
-}
+};
 
-export default LogIn
+export default LogIn;

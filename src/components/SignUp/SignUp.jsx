@@ -1,127 +1,121 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import AuthContext from "../../context/Authcontext";
 
 const SignUp = () => {
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-    });
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [error, setError] = useState("");
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const { registerUser } = useContext(AuthContext);
 
-    const [error, setError] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+    // Simple validation for empty fields
+    if (!username || !email || !password || !password2) {
+      setError("Please fill all fields");
+      return;
+    }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match.");
-            return;
-        }
-    
-        try {
-            const response = await fetch("http://127.0.0.1:8000/api/users/register/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: formData.email, // or any username logic
-                    email: formData.email,
-                    password: formData.password,
-                    first_name: formData.firstName,
-                    last_name: formData.lastName,
-                }),
-            });
-    
-            if (!response.ok) throw new Error("Failed to register");
-    
-            const data = await response.json();
-            console.log("Registration successful:", data);
-            alert("Account created successfully!");
-        } catch (error) {
-            setError("Registration failed. Please try again.");
-        }
-    };
+    if (password !== password2) {
+      setError("Passwords do not match");
+      return;
+    }
 
-    return (
-        <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold text-[#1C9FDD] text-center mb-4">Create a New Account</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="flex gap-4 mb-4">
-                    <div className="w-1/2">
-                        <label className="block text-gray-700 mb-1">First Name</label>
-                        <input
-                            type="text"
-                            name="firstName"
-                            placeholder="First Name"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
-                            required
-                        />
-                    </div>
-                    <div className="w-1/2">
-                        <label className="block text-gray-700 mb-1">Last Name</label>
-                        <input
-                            type="text"
-                            name="lastName"
-                            placeholder="Last Name"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
-                            required
-                        />
-                    </div>
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-1">Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
-                        required
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-1">Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
-                        required
-                    />
-                </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-1">Confirm Password</label>
-                    <input
-                        type="password"
-                        name="confirmPassword"
-                        placeholder="Re-enter your password"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
-                        required
-                    />
-                </div>
-                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-                <button
-                    type="submit"
-                    className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
-                >
-                    Sign Up
-                </button>
-            </form>
+    // If validation passes, try to register the user
+    const response = await registerUser(username, email, password, password2);
+
+    if (response.status === 201) {
+      setIsSuccessModalOpen(true); // Show success modal
+    } else {
+      setError("Registration failed, please try again.");
+    }
+  };
+
+  const closeSuccessModal = () => {
+    setIsSuccessModalOpen(false);
+  };
+
+  return (
+    <div className="w-full max-w-sm mx-auto p-4">
+      <h2 className="text-2xl font-semibold text-[#1C9FDD] text-center mb-4">Create a New Account</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-1">Username</label>
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            required
+          />
         </div>
-    );
-}
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-1">Email</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-1">Password</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-1">Confirm Password</label>
+          <input
+            type="password"
+            name="password2"
+            placeholder="Re-enter your password"
+            value={password2}
+            onChange={(e) => setPassword2(e.target.value)}
+            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            required
+          />
+        </div>
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        <button
+          type="submit"
+          className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
+        >
+          Sign Up
+        </button>
+      </form>
 
-export default SignUp
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-2xl font-semibold text-[#1C9FDD] mb-4">Success!</h2>
+            <p className="text-gray-700 mb-4">Your account has been created successfully.</p>
+            <button
+              onClick={closeSuccessModal}
+              className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SignUp;

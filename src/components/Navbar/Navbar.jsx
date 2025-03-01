@@ -37,11 +37,11 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 bg-[#1C9FDD] shadow-md z-50 px-4 py-4 md:px-6 lg:px-12 flex items-center justify-between h-[80px]">
+        <nav className="fixed top-0 left-0 right-0 bg-[#1C9FDD] shadow-md z-50 px-4 py-4 sm:px-6 lg:px-12 flex items-center justify-between h-[80px]">
             <div>
                 <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
             </div>
-            <div className="space-x-2 md:space-x-4">
+            <div className="space-x-2 md:space-x-4 hidden md:flex">
                 {/* Log In Button */}
                 <button
                     className="text-white font-semibold px-3 py-1 border border-white rounded-lg transition-all duration-300 hover:text-[#1C9FDD] hover:bg-white hover:shadow-lg md:px-5 md:py-2"
@@ -50,16 +50,24 @@ const Navbar = () => {
                     Log In
                 </button>
 
-                {/* Start Campaign Button */}
+                {/* Start Campaign Button (hidden on mobile) */}
                 <button
-                    className="bg-white text-[#1C9FDD] font-semibold px-4 py-1.5 rounded-lg shadow-md transition-all duration-300 hover:bg-[#1583BB] hover:text-white hover:shadow-lg md:px-6 md:py-2"
+                    className="bg-white text-[#1C9FDD] font-semibold px-4 py-1.5 rounded-lg shadow-md transition-all duration-300 hover:bg-[#1583BB] hover:text-white hover:shadow-lg md:px-6 md:py-2 hidden sm:block"
                     onClick={handleStartCampaignClick}
                 >
                     Start Campaign
                 </button>
             </div>
 
-
+            {/* Mobile View - Hamburger Menu */}
+            <div className="md:hidden flex items-center">
+                <button
+                    onClick={handleLoginClick}
+                    className="text-white font-semibold px-3 py-1 border border-white rounded-lg"
+                >
+                    Log In
+                </button>
+            </div>
 
             {showSlider && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
