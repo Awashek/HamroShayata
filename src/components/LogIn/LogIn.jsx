@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";  // Importing useNavigate
-import AuthContext from "../../context/Authcontext";
+import { useNavigate } from "react-router-dom"; 
+import AuthContext from "../../context/Authcontext";  
 
-const LogIn = () => {
-    const { loginUser } = useContext(AuthContext);
-    const navigate = useNavigate();  // Initializing navigate function
+const LogIn = ({ onLoginSuccess }) => {
+    const { setAuthTokens, setUser, loginUser } = useContext(AuthContext); 
+    const navigate = useNavigate(); 
 
     const [formData, setFormData] = useState({
         email: "",
@@ -19,8 +19,7 @@ const LogIn = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const email = e.target.email.value;
-        const password = e.target.password.value;
+        const { email, password } = formData;
 
         if (email.length === 0) {
             setError("Email is required");
@@ -32,51 +31,51 @@ const LogIn = () => {
             return;
         }
 
-        // Call loginUser to perform the login action
-        const loginSuccess = await loginUser(email, password);
+        const loginSuccess = await loginUser(email, password, setAuthTokens, setUser, navigate);
 
-        // If login is successful, navigate to home page (root route '/')
         if (loginSuccess) {
-            navigate("/");  // Navigates to the home page, which is the root '/'
+            onLoginSuccess();  // Calling the function to close the modal and navigate
         } else {
             setError("Login failed. Please check your credentials.");
         }
     };
 
     return (
-        <div className="w-full max-w-sm">
-            <h2 className="text-2xl font-semibold mb-4 text-center text-[#1C9FDD]">
-                Login to HamroSahayata
-            </h2>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-1">Email</label>
+        <div className="w-full">
+            <h2 className="text-2xl font-semibold text-[#1C9FDD] text-center mb-4">Welcome Back</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label htmlFor="email" className="block text-gray-700">Email</label>
                     <input
                         type="email"
+                        id="email"
                         name="email"
-                        placeholder="Enter your email"
+                        placeholder="Enter your email address"
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
+                        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-1">Password</label>
+                <div>
+                    <label htmlFor="password" className="block text-gray-700">Password</label>
                     <input
                         type="password"
+                        id="password"
                         name="password"
                         placeholder="Enter your password"
                         value={formData.password}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
+                        className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+                {error && <div className="text-red-500">{error}</div>}
+
                 <button
                     type="submit"
-                    className="w-full bg-[#1C9FDD] text-white py-2 rounded-full hover:bg-[#1577A5]"
+                    className="w-full bg-[#1C9FDD] text-white py-2 rounded-md"
                 >
                     Log In
                 </button>
@@ -84,5 +83,7 @@ const LogIn = () => {
         </div>
     );
 };
+
+
 
 export default LogIn;

@@ -1,49 +1,53 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Hero from './components/Home/Hero';
 import CampaignCard from './components/Campaign/CampaignCard';
 import CampaignDetail from './components/Campaign/CampaignDetail';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import Category from './components/Category/Category';
 import Footer from './components/Footer/Footer';
-import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import UserProfile from './components/Users/UserProfile';
 import CreateCampaignForm from './components/Campaign/CreateCampaginForm';
 import Navbar from './components/Navbar/Navbar';
 import SubscriptionPage from './components/Subscription/SubscriptionPage';
 import PrivateRoute from './utils/PrivateRoute';
-import LogIn from './components/LogIn/LogIn'; // Import the LogIn component
+import LogIn from './components/LogIn/LogIn';
 import { AuthProvider } from './context/Authcontext';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        {/* Navbar appears on every page */}
         <Navbar />
         <div className="pt-[80px]">
-          <Routes>
-            {/* Public Route - LogIn */}
-            <Route path="/login" element={<LogIn />} />
+          <Suspense fallback={<div>Loading...</div>}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<LogIn />} />
+              <Route path="/" element={
+                <>
+                  <Hero />
+                  <Category />
+                  <CampaignCard />
+                  <SubscriptionPage />
+                  
+                </>
+              } />
+              <Route path="/campaigns/:campaignId" element={<CampaignDetail />} />
 
-            {/* Public Route */}
-            <Route path="/" element={
-              <>
-                <Hero />
-                <Category />
-                <CampaignCard />
-                <SubscriptionPage />
-              </>
-            } />
-
-            {/* Private Routes */}
-            <Route path='admin' element={<PrivateRoute element={<AdminDashboard />} />} />
-            <Route path='createcampaign' element={<PrivateRoute element={<CreateCampaignForm />} />} />
-            <Route path='userprofile' element={<PrivateRoute element={<UserProfile />} />} />
-            <Route path='campaigns/:campaignId' element={<PrivateRoute element={<CampaignDetail />} />} />
-          </Routes>
+              {/* Private Routes */}
+              <Route path="/dashboard" element={<PrivateRoute />}>
+                <Route path="/dashboard" element={<AdminDashboard />} />
+              </Route>
+              <Route path="/createcampaign" element={<PrivateRoute />}>
+                <Route path="/createcampaign" element={<CreateCampaignForm />} />
+              </Route>
+              <Route path="/userprofile" element={<PrivateRoute />}>
+                <Route path="/userprofile" element={<UserProfile />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </div>
-
-        {/* Footer appears on every page */}
         <Footer />
       </AuthProvider>
     </Router>

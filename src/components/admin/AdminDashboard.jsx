@@ -1,15 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     HomeIcon,
     ArchiveBoxIcon,
     UserIcon,
     BanknotesIcon,
-    CogIcon,
     Bars3Icon,
     XMarkIcon,
 } from "@heroicons/react/24/solid";
 
+import useAxios from "../../utils/useAxios"
+import { jwtDecode } from "jwt-decode";
+
 const AdminDashboard = () => {
+
+    const [res, setRes] = useState("")
+    const api = useAxios()
+    const token = localStorage.getItem("authTokens")
+
+    if (token) {
+        const decode = jwtDecode(token)
+        var user_id = decode.user_id
+        var full_name = decode.full_name
+        var username = decode.username
+        var image = decode.image
+        var bio = decode.user_id
+
+    }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await api.get("/test/")
+                setRes(response.data.response);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                setRes("Error fetching data");
+            }
+        }
+        fetchData();
+    })
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(true); // Simulated login state
     const [campaigns, setCampaigns] = useState([
@@ -62,7 +92,7 @@ const AdminDashboard = () => {
                     } transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:transform-none`}
             >
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold">HamroSahayata Admin</h2>
+                    <h2 className="text-2xl font-bold">HamroSahayata Admin {username}</h2>
                     <button onClick={toggleSidebar} className="lg:hidden">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
@@ -84,18 +114,8 @@ const AdminDashboard = () => {
                         <BanknotesIcon className="w-5 h-5 mr-4 text-white" />
                         <button className="text-lg hover:text-blue-300">Donations</button>
                     </li>
-                    <li className="mb-6 flex items-center">
-                        <CogIcon className="w-5 h-5 mr-4 text-white" />
-                        <button className="text-lg hover:text-blue-300">Settings</button>
-                    </li>
-                    <li className="mb-6 flex items-center">
-                        <button
-                            onClick={handleLogout}
-                            className="text-lg hover:text-blue-300 flex items-center"
-                        >
-                            <span>Logout</span>
-                        </button>
-                    </li>
+
+
                 </ul>
             </div>
 
@@ -108,7 +128,9 @@ const AdminDashboard = () => {
                         <Bars3Icon className="w-6 h-6 text-gray-800" />
                     </button>
                 </div>
-
+                    <div className="alert alert-success">
+                    {res}
+                    </div>
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
