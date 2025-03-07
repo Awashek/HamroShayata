@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import AuthContext from "../../context/Authcontext";
+import AuthContext from "../../context/AuthContext"
 
 const SignUp = ({ onRegistrationSuccess }) => {
   const [username, setUsername] = useState("");

@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import CbgImage from "../../assets/images/form-bg.jpg";
+import AuthContext from "../../context/AuthContext"; // Make sure to adjust the path to your AuthContext
 
 const CreateCampaignForm = () => {
+    const { authTokens, createCampaign } = useContext(AuthContext);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         firstName: "",
@@ -34,7 +36,6 @@ const CreateCampaignForm = () => {
         }));
     };
 
-
     const validateStep = () => {
         let newErrors = {};
         if (step === 1) {
@@ -66,6 +67,13 @@ const CreateCampaignForm = () => {
         if (validateStep()) {
             setIsSubmitting(true);
 
+            // Check if user is authenticated
+            if (!authTokens) {
+                alert("Please login to create a campaign");
+                setIsSubmitting(false);
+                return;
+            }
+
             const formDataToSend = new FormData();
 
             // Append each field from formData
@@ -79,7 +87,7 @@ const CreateCampaignForm = () => {
                             Array.from(formData[key]).forEach((file) => {
                                 formDataToSend.append(key, file);
                             });
-                        } else {
+                        } else if (formData[key]) {
                             // If it's a single file (non-FileList), append directly
                             formDataToSend.append(key, formData[key]);
                         }
@@ -90,34 +98,56 @@ const CreateCampaignForm = () => {
                 }
             }
 
-            // Log the FormData to check its contents
-            for (let [key, value] of formDataToSend.entries()) {
-                console.log(key, value);
-            }
-
             try {
-                const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
-                    method: "POST",
-                    body: formDataToSend,
-                });
+                // Use the createCampaign function from AuthContext if available
+                if (createCampaign) {
+                    const result = await createCampaign(formDataToSend);
 
-                if (response.ok) {
-                    alert("Form submitted successfully!");
-                    setFormData({
-                        firstName: "",
-                        lastName: "",
-                        campaignTitle: "",
-                        description: "",
-                        goalAmount: "",
-                        deadline: "",
-                        category: "",
-                        images: '',
-                        citizenshipId: '',
-                    });
-                    setStep(1);
+                    if (result.status === 200 || result.status === 201) {
+                        alert("Campaign created successfully!");
+                        setFormData({
+                            firstName: "",
+                            lastName: "",
+                            campaignTitle: "",
+                            description: "",
+                            goalAmount: "",
+                            deadline: "",
+                            category: "",
+                            images: null,
+                            citizenshipId: null,
+                        });
+                        setStep(1);
+                    } else {
+                        alert(`Error: ${result.errorData?.message || "Something went wrong!"}`);
+                    }
                 } else {
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.message || "Something went wrong!"}`);
+                    // Fallback to direct API call if createCampaign is not available
+                    const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${authTokens.access}`,
+                        },
+                        body: formDataToSend,
+                    });
+
+                    if (response.ok) {
+                        alert("Form submitted successfully!");
+                        setFormData({
+                            firstName: "",
+                            lastName: "",
+                            campaignTitle: "",
+                            description: "",
+                            goalAmount: "",
+                            deadline: "",
+                            category: "",
+                            images: null,
+                            citizenshipId: null,
+                        });
+                        setStep(1);
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Error: ${errorData.message || "Something went wrong!"}`);
+                    }
                 }
             } catch (error) {
                 alert("Network error. Please try again.");
@@ -128,12 +158,9 @@ const CreateCampaignForm = () => {
         }
     };
 
-
     return (
         <>
-
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-
                 <div className="flex flex-col md:flex-row w-full max-w-7xl bg-white rounded-lg shadow-lg overflow-hidden">
                     {/* Image Section - 30% width */}
                     <div className="w-full md:w-3/10 relative">
@@ -143,13 +170,11 @@ const CreateCampaignForm = () => {
                             className="w-full h-full object-cover"
                         />
                     </div>
-
                     {/* Form Section - 70% width */}
                     <div className="w-full md:w-7/10 p-6 md:p-8 lg:p-12">
                         <h2 className="text-3xl md:text-4xl font-bold text-center text-[#1C9FDD] mb-8">
                             Create a New Campaign
                         </h2>
-
                         {/* Progress Indicator */}
                         <div className="flex justify-between mb-8 gap-2">
                             {['Step 1', 'Step 2', 'Step 3'].map((label, index) => (
@@ -164,7 +189,6 @@ const CreateCampaignForm = () => {
                                 </div>
                             ))}
                         </div>
-
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {step === 1 && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -199,7 +223,6 @@ const CreateCampaignForm = () => {
                                     </div>
                                 </div>
                             )}
-
                             {step === 2 && (
                                 <div className="space-y-6">
                                     <div>
@@ -222,7 +245,6 @@ const CreateCampaignForm = () => {
                                     </div>
                                 </div>
                             )}
-
                             {step === 3 && (
                                 <div className="space-y-6">
                                     <div>
@@ -237,7 +259,6 @@ const CreateCampaignForm = () => {
                                     </div>
                                 </div>
                             )}
-
                             <div className="flex justify-between mt-10">
                                 {step > 1 && (
                                     <button
@@ -270,7 +291,6 @@ const CreateCampaignForm = () => {
                     </div>
                 </div>
             </div>
-
         </>
     );
 };

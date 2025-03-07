@@ -128,6 +128,7 @@ const AdminDashboard = () => {
                         <Bars3Icon className="w-6 h-6 text-gray-800" />
                     </button>
                 </div>
+                
                     <div className="alert alert-success">
                     {res}
                     </div>
