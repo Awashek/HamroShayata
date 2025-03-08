@@ -13,11 +13,15 @@ import SubscriptionPage from './components/Subscription/SubscriptionPage';
 import PrivateRoute from './utils/PrivateRoute';
 import LogIn from './components/LogIn/LogIn';
 import { AuthProvider } from './context/Authcontext';
+import { CampaignProvider } from './context/campaignContext';
+import Form from './components/campaigntest/Form';
+import CampaignList from './components/campaigntest/CampaignList';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+        <CampaignProvider>
         <Navbar />
         <div className="pt-[80px]">
           <Suspense fallback={<div>Loading...</div>}>
@@ -30,7 +34,8 @@ function App() {
                   <Category />
                   <CampaignCard />
                   <SubscriptionPage />
-                  
+                  <Form />
+                  <CampaignList />
                 </>
               } />
               <Route path="/campaigns/:campaignId" element={<CampaignDetail />} />
@@ -49,6 +54,7 @@ function App() {
           </Suspense>
         </div>
         <Footer />
+        </CampaignProvider>
       </AuthProvider>
     </Router>
   );

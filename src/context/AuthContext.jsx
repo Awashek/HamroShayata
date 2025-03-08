@@ -96,60 +96,7 @@ export const AuthProvider = ({ children }) => {
     navigate("/");
   };
 
-  const createCampaign = async (campaignData) => {
-    if (!authTokens) {
-      console.log("User is not authenticated");
-      return { status: 401, message: "Not authenticated" };
-    }
-    
-    try {
-      // Check if campaignData is FormData
-      if (campaignData instanceof FormData) {
-        // If it's FormData, use it directly without setting Content-Type
-        const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authTokens.access}`,
-            // Don't set Content-Type header when sending FormData
-          },
-          body: campaignData,
-        });
-        
-        if (response.ok) {
-          const createdCampaign = await response.json();
-          console.log("Campaign created successfully:", createdCampaign);
-          return { status: response.status, data: createdCampaign };
-        } else {
-          const errorData = await response.json();
-          console.log("Error creating campaign:", errorData);
-          return { status: response.status, errorData };
-        }
-      } else {
-        // If it's a regular object, send as JSON
-        const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authTokens.access}`,
-          },
-          body: JSON.stringify(campaignData),
-        });
-        
-        if (response.ok) {
-          const createdCampaign = await response.json();
-          console.log("Campaign created successfully:", createdCampaign);
-          return { status: response.status, data: createdCampaign };
-        } else {
-          const errorData = await response.json();
-          console.log("Error creating campaign:", errorData);
-          return { status: response.status, errorData };
-        }
-      }
-    } catch (error) {
-      console.error("Error creating campaign:", error);
-      return { status: 500, message: error.message };
-    }
-  };
+  
 
   const contextData = {
     authTokens,
@@ -159,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     registerUser,
     logoutUser,
-    createCampaign, 
+
   };
 
   return (

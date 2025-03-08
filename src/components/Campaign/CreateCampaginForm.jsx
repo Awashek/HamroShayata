@@ -1,51 +1,60 @@
 import React, { useState, useContext } from "react";
 import CbgImage from "../../assets/images/form-bg.jpg";
-import AuthContext from "../../context/AuthContext"; // Make sure to adjust the path to your AuthContext
+import AuthContext from "../../context/Authcontext";
+import { useCampaigns } from "../../context/campaignContext";
 
 const CreateCampaignForm = () => {
-    const { authTokens, createCampaign } = useContext(AuthContext);
+    const { authTokens } = useContext(AuthContext);
+    const { createCampaign } = useCampaigns();
     const [step, setStep] = useState(1);
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        campaignTitle: "",
-        description: "",
-        goalAmount: "",
-        deadline: "",
-        category: "",
-        images: null,
-        citizenshipId: null,
-    });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        campaign_title: '',
+        description: '',
+        goal_amount: '',
+        deadline: '',
+        category: '',
+        images: null,
+        citizenship_id: null,
+    });
+
+
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        const { name, value, files } = e.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: files ? files[0] : value,  // Ensuring single-file selection
+        }));
+
         if (errors[name]) {
-            setErrors({ ...errors, [name]: "" });
+            setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
         }
     };
 
+
     const handleFileChange = (e) => {
-        const { name } = e.target;
-        const files = e.target.files; // This returns a FileList object
+        const { name, files } = e.target;
         setFormData((prevData) => ({
             ...prevData,
-            [name]: files.length > 0 ? files : null, // Store file(s) if available
+            [name]: files.length > 1 ? Array.from(files) : files[0], // Convert FileList to Array
         }));
     };
+    
 
     const validateStep = () => {
         let newErrors = {};
         if (step === 1) {
-            if (!formData.firstName) newErrors.firstName = "First Name is required";
-            if (!formData.lastName) newErrors.lastName = "Last Name is required";
-            if (!formData.campaignTitle) newErrors.campaignTitle = "Campaign Title is required";
+            if (!formData.first_name) newErrors.first_name = "First Name is required";
+            if (!formData.last_name) newErrors.last_name = "Last Name is required";
+            if (!formData.campaign_title) newErrors.campaign_title = "Campaign Title is required";
             if (!formData.category) newErrors.category = "Category is required";
         } else if (step === 2) {
             if (!formData.description) newErrors.description = "Description is required";
-            if (!formData.goalAmount) newErrors.goalAmount = "Goal Amount is required";
+            if (!formData.goal_amount) newErrors.goal_amount = "Goal Amount is required";
             if (!formData.deadline) newErrors.deadline = "Deadline is required";
         }
         setErrors(newErrors);
@@ -54,109 +63,93 @@ const CreateCampaignForm = () => {
 
     const nextStep = () => {
         if (validateStep()) {
-            if (step < 3) {
-                setStep(step + 1);
-            }
+            setStep((prev) => Math.min(prev + 1, 3));
         }
     };
 
-    const prevStep = () => setStep(step - 1);
+    const prevStep = () => {
+        setStep((prev) => Math.max(prev - 1, 1));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (validateStep()) {
-            setIsSubmitting(true);
-
-            // Check if user is authenticated
-            if (!authTokens) {
-                alert("Please login to create a campaign");
-                setIsSubmitting(false);
-                return;
-            }
-
-            const formDataToSend = new FormData();
-
-            // Append each field from formData
-            for (const key in formData) {
-                if (formData[key] !== null && formData[key] !== "") {
-                    // If the field is a file input (either images or citizenshipId)
-                    if (key === "images" || key === "citizenshipId") {
-                        // Check if it's a FileList (for images and citizenshipId fields)
-                        if (formData[key] instanceof FileList) {
-                            // For file inputs, ensure we handle multiple files
-                            Array.from(formData[key]).forEach((file) => {
-                                formDataToSend.append(key, file);
-                            });
-                        } else if (formData[key]) {
-                            // If it's a single file (non-FileList), append directly
-                            formDataToSend.append(key, formData[key]);
-                        }
+    
+        if (!authTokens) {
+            alert("You must be logged in to create a campaign.");
+            return;
+        }
+    
+        if (!validateStep()) return;
+    
+        setIsSubmitting(true);
+        setErrors({});
+    
+        const goalAmount = parseFloat(formData.goal_amount);
+        if (isNaN(goalAmount)) {
+            setErrors({ goal_amount: "A valid number is required." });
+            setIsSubmitting(false);
+            return;
+        }
+    
+        const deadlineDate = new Date(formData.deadline);
+        if (isNaN(deadlineDate.getTime())) {
+            setErrors({ deadline: "Date format must be YYYY-MM-DD." });
+            setIsSubmitting(false);
+            return;
+        }
+        const formattedDeadline = deadlineDate.toISOString().split("T")[0];
+    
+        const formDataToSend = new FormData();
+        
+        Object.keys(formData).forEach((key) => {
+            if (formData[key]) {
+                if (key === "goal_amount") {
+                    formDataToSend.append(key, goalAmount);
+                } else if (key === "deadline") {
+                    formDataToSend.append(key, formattedDeadline);
+                } else if (key === "images" || key === "citizenship_id") {
+                    if (Array.isArray(formData[key])) {
+                        formData[key].forEach((file) => formDataToSend.append(`${key}[]`, file)); // Append multiple files
                     } else {
-                        // For non-file fields, simply append the value
-                        formDataToSend.append(key, formData[key]);
-                    }
-                }
-            }
-
-            try {
-                // Use the createCampaign function from AuthContext if available
-                if (createCampaign) {
-                    const result = await createCampaign(formDataToSend);
-
-                    if (result.status === 200 || result.status === 201) {
-                        alert("Campaign created successfully!");
-                        setFormData({
-                            firstName: "",
-                            lastName: "",
-                            campaignTitle: "",
-                            description: "",
-                            goalAmount: "",
-                            deadline: "",
-                            category: "",
-                            images: null,
-                            citizenshipId: null,
-                        });
-                        setStep(1);
-                    } else {
-                        alert(`Error: ${result.errorData?.message || "Something went wrong!"}`);
+                        formDataToSend.append(key, formData[key]); // Append single file
                     }
                 } else {
-                    // Fallback to direct API call if createCampaign is not available
-                    const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${authTokens.access}`,
-                        },
-                        body: formDataToSend,
-                    });
-
-                    if (response.ok) {
-                        alert("Form submitted successfully!");
-                        setFormData({
-                            firstName: "",
-                            lastName: "",
-                            campaignTitle: "",
-                            description: "",
-                            goalAmount: "",
-                            deadline: "",
-                            category: "",
-                            images: null,
-                            citizenshipId: null,
-                        });
-                        setStep(1);
-                    } else {
-                        const errorData = await response.json();
-                        alert(`Error: ${errorData.message || "Something went wrong!"}`);
-                    }
+                    formDataToSend.append(key, formData[key]);
                 }
-            } catch (error) {
-                alert("Network error. Please try again.");
-                console.error("Error details:", error);
-            } finally {
-                setIsSubmitting(false);
             }
+        });
+    
+        console.log("Submitting form data:", Object.fromEntries(formDataToSend.entries()));
+    
+        try {
+            const result = await createCampaign(formDataToSend);
+            if (result.status === 201) {
+                alert("Campaign created successfully!");
+                setFormData({
+                    first_name: '',
+                    last_name: '',
+                    campaign_title: '',
+                    description: '',
+                    goal_amount: '',
+                    deadline: '',
+                    category: '',
+                    images: null,
+                    citizenship_id: null,
+                });
+                setStep(1);
+            } else if (result.errorData) {
+                setErrors(result.errorData);
+            } else {
+                alert("Something went wrong!");
+            }
+        } catch (error) {
+            alert("Network error. Please try again.");
+            console.error("Error details:", error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
+    
 
     return (
         <>
@@ -194,21 +187,21 @@ const CreateCampaignForm = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">First Name</label>
-                                        <input name="firstName" type="text" value={formData.firstName} onChange={handleChange}
-                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.firstName ? 'border-red-500' : ''}`} />
-                                        {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                                        <input name="first_name" type="text" value={formData.first_name} onChange={handleChange}
+                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.first_name ? 'border-red-500' : ''}`} />
+                                        {errors.first_name && <p className="text-red-500 text-sm mt-1">{errors.first_name}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Last Name</label>
-                                        <input name="lastName" type="text" value={formData.lastName} onChange={handleChange}
-                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.lastName ? 'border-red-500' : ''}`} />
-                                        {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                                        <input name="last_name" type="text" value={formData.last_name} onChange={handleChange}
+                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.last_name ? 'border-red-500' : ''}`} />
+                                        {errors.last_name && <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Campaign Title</label>
-                                        <input name="campaignTitle" type="text" value={formData.campaignTitle} onChange={handleChange}
-                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.campaignTitle ? 'border-red-500' : ''}`} />
-                                        {errors.campaignTitle && <p className="text-red-500 text-sm mt-1">{errors.campaignTitle}</p>}
+                                        <input name="campaign_title" type="text" value={formData.campaign_title} onChange={handleChange}
+                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.campaign_title ? 'border-red-500' : ''}`} />
+                                        {errors.campaign_title && <p className="text-red-500 text-sm mt-1">{errors.campaign_title}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Category</label>
@@ -233,9 +226,9 @@ const CreateCampaignForm = () => {
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Goal Amount (Rupees)</label>
-                                        <input name="goalAmount" type="number" value={formData.goalAmount} onChange={handleChange}
-                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.goalAmount ? 'border-red-500' : ''}`} />
-                                        {errors.goalAmount && <p className="text-red-500 text-sm mt-1">{errors.goalAmount}</p>}
+                                        <input name="goal_amount" type="number" value={formData.goal_amount} onChange={handleChange}
+                                            className={`w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD] ${errors.goal_amount ? 'border-red-500' : ''}`} />
+                                        {errors.goal_amount && <p className="text-red-500 text-sm mt-1">{errors.goal_amount}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Deadline</label>
@@ -254,7 +247,7 @@ const CreateCampaignForm = () => {
                                     </div>
                                     <div>
                                         <label className="block text-gray-700 font-medium mb-2">Upload Citizenship ID</label>
-                                        <input name="citizenshipId" type="file" onChange={handleFileChange}
+                                        <input name="citizenship_id" type="file" onChange={handleFileChange}
                                             className="w-full border rounded-lg py-2 px-3 focus:ring-2 focus:ring-[#1C9FDD]" />
                                     </div>
                                 </div>
