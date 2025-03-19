@@ -1,223 +1,147 @@
-import React, { useState, useEffect } from "react";
-import {
-    HomeIcon,
-    ArchiveBoxIcon,
-    UserIcon,
-    BanknotesIcon,
-    Bars3Icon,
-    XMarkIcon,
-} from "@heroicons/react/24/solid";
-
-import useAxios from "../../utils/useAxios"
-import { jwtDecode } from "jwt-decode";
+import React, { useContext, useEffect } from "react";
+import { useCampaigns } from "../../context/CampaignContext";
+import { AuthContext } from "../../context/AuthContext";
 
 const AdminDashboard = () => {
+    const { campaigns, loading } = useCampaigns();
+    const { user } = useContext(AuthContext);
 
-    const [res, setRes] = useState("")
-    const api = useAxios()
-    const token = localStorage.getItem("authTokens")
-
-    if (token) {
-        const decode = jwtDecode(token)
-        var user_id = decode.user_id
-        var full_name = decode.full_name
-        var username = decode.username
-        var image = decode.image
-        var bio = decode.user_id
-
-    }
-
+    // Ensure only admins can access this dashboard
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await api.get("/test/")
-                setRes(response.data.response);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                setRes("Error fetching data");
-            }
+        if (!user || !user.is_admin) {
+            window.location.href = "/"; // Redirect non-admin users
         }
-        fetchData();
-    })
+    }, [user]);
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(true); // Simulated login state
-    const [campaigns, setCampaigns] = useState([
-        { id: 1, name: "Medical Fund for ABC", goal: 10000, donated: 5000, status: "Active" },
-        { id: 2, name: "Education for XYZ", goal: 15000, donated: 8000, status: "In Progress" },
-    ]);
-    const [donations, setDonations] = useState([
-        { id: 1, donor: "John Doe", amount: 100, campaign: "Medical Fund for ABC", date: "2024-12-01" },
-        { id: 2, donor: "Jane Smith", amount: 200, campaign: "Education for XYZ", date: "2024-12-02" },
-    ]);
+    const handleApprove = async (id) => {
+        try {
+            const authTokens = JSON.parse(localStorage.getItem("authTokens"));
+            if (!authTokens?.access) {
+                alert("You must be logged in to approve a campaign.");
+                return;
+            }
 
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
+            const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/approve/`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${authTokens.access}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (response.ok) {
+                alert("Campaign approved successfully!");
+                window.location.reload(); // Refresh the page to reflect changes
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to approve campaign: ${errorData.detail || "Unknown error"}`);
+            }
+        } catch (error) {
+            console.error("Error approving campaign:", error);
+            alert("An error occurred while approving the campaign.");
+        }
     };
 
-    const handleDeleteCampaign = (id) => {
-        setCampaigns(campaigns.filter((campaign) => campaign.id !== id));
+    const handleReject = async (id) => {
+        try {
+            const authTokens = JSON.parse(localStorage.getItem("authTokens"));
+            if (!authTokens?.access) {
+                alert("You must be logged in to reject a campaign.");
+                return;
+            }
+
+            const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/reject/`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${authTokens.access}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (response.ok) {
+                alert("Campaign rejected successfully!");
+                window.location.reload(); // Refresh the page to reflect changes
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to reject campaign: ${errorData.detail || "Unknown error"}`);
+            }
+        } catch (error) {
+            console.error("Error rejecting campaign:", error);
+            alert("An error occurred while rejecting the campaign.");
+        }
     };
 
-    const handleDeleteDonation = (id) => {
-        setDonations(donations.filter((donation) => donation.id !== id));
-    };
-
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        alert("Logged out successfully!");
-    };
-
-    if (!isLoggedIn) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-                <div className="bg-white p-8 rounded-lg shadow-md text-center">
-                    <h2 className="text-2xl font-bold mb-4">Please Log In</h2>
-                    <button
-                        onClick={() => setIsLoggedIn(true)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                        Login
-                    </button>
-                </div>
-            </div>
-        );
+    if (loading) {
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
     return (
-        <div className="min-h-screen flex bg-gray-100">
-            {/* Sidebar */}
-            <div
-                className={`fixed inset-y-0 left-0 w-64 bg-blue-600 text-white p-6 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-                    } transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:transform-none`}
-            >
-                <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-bold">HamroSahayata Admin {username}</h2>
-                    <button onClick={toggleSidebar} className="lg:hidden">
-                        <XMarkIcon className="w-6 h-6" />
-                    </button>
-                </div>
-                <ul>
-                    <li className="mb-6 flex items-center">
-                        <HomeIcon className="w-5 h-5 mr-4 text-white" />
-                        <button className="text-lg hover:text-blue-300">Dashboard</button>
-                    </li>
-                    <li className="mb-6 flex items-center">
-                        <ArchiveBoxIcon className="w-5 h-5 mr-4 text-white" />
-                        <button className="text-lg hover:text-blue-300">Campaigns</button>
-                    </li>
-                    <li className="mb-6 flex items-center">
-                        <UserIcon className="w-5 h-5 mr-4 text-white" />
-                        <button className="text-lg hover:text-blue-300">Users</button>
-                    </li>
-                    <li className="mb-6 flex items-center">
-                        <BanknotesIcon className="w-5 h-5 mr-4 text-white" />
-                        <button className="text-lg hover:text-blue-300">Donations</button>
-                    </li>
-
-
-                </ul>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 p-8">
-                {/* Mobile Header */}
-                <div className="lg:hidden flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-                    <button onClick={toggleSidebar}>
-                        <Bars3Icon className="w-6 h-6 text-gray-800" />
-                    </button>
-                </div>
-                
-                    <div className="alert alert-success">
-                    {res}
-                    </div>
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-                        <h2 className="text-xl font-semibold text-gray-700">Total Campaigns</h2>
-                        <p className="text-3xl text-blue-600">{campaigns.length}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-                        <h2 className="text-xl font-semibold text-gray-700">Total Donations</h2>
-                        <p className="text-3xl text-green-600">
-                            ${donations.reduce((sum, donation) => sum + donation.amount, 0)}
-                        </p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
-                        <h2 className="text-xl font-semibold text-gray-700">Active Users</h2>
-                        <p className="text-3xl text-yellow-600">350</p>
-                    </div>
-                </div>
-
-                {/* Campaigns Table */}
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Latest Campaigns</h2>
-                <div className="bg-white p-6 rounded-lg shadow-md mb-8 overflow-x-auto">
-                    <table className="w-full table-auto">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="py-3 px-4 text-left">Campaign</th>
-                                <th className="py-3 px-4 text-left">Goal</th>
-                                <th className="py-3 px-4 text-left">Donated</th>
-                                <th className="py-3 px-4 text-left">Status</th>
-                                <th className="py-3 px-4 text-left">Actions</th>
+        <div className="container mx-auto p-6">
+            <h1 className="text-3xl font-bold text-center mb-8">Admin Dashboard</h1>
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Title
+                            </th>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                User
+                            </th>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Goal Amount
+                            </th>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Deadline
+                            </th>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th className="px-6 py-3 border-b border-gray-200 text-left text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {campaigns.map((campaign) => (
+                            <tr key={campaign.id}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {campaign.campaign_title}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {campaign.user}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${campaign.goal_amount}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {new Date(campaign.deadline).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {campaign.status}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {campaign.status === "pending" && (
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => handleApprove(campaign.id)}
+                                                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-200"
+                                            >
+                                                Approve
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(campaign.id)}
+                                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-200"
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    )}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {campaigns.map((campaign) => (
-                                <tr key={campaign.id}>
-                                    <td className="py-4 px-4">{campaign.name}</td>
-                                    <td className="py-4 px-4">${campaign.goal}</td>
-                                    <td className="py-4 px-4">${campaign.donated}</td>
-                                    <td className="py-4 px-4 text-green-600">{campaign.status}</td>
-                                    <td className="py-4 px-4">
-                                        <button className="text-blue-500 hover:text-blue-700 mr-2">Edit</button>
-                                        <button
-                                            onClick={() => handleDeleteCampaign(campaign.id)}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Recent Donations */}
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Recent Donations</h2>
-                <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-                    <table className="w-full table-auto">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="py-3 px-4 text-left">Donor</th>
-                                <th className="py-3 px-4 text-left">Amount</th>
-                                <th className="py-3 px-4 text-left">Campaign</th>
-                                <th className="py-3 px-4 text-left">Date</th>
-                                <th className="py-3 px-4 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {donations.map((donation) => (
-                                <tr key={donation.id}>
-                                    <td className="py-4 px-4">{donation.donor}</td>
-                                    <td className="py-4 px-4">${donation.amount}</td>
-                                    <td className="py-4 px-4">{donation.campaign}</td>
-                                    <td className="py-4 px-4">{donation.date}</td>
-                                    <td className="py-4 px-4">
-                                        <button
-                                            onClick={() => handleDeleteDonation(donation.id)}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

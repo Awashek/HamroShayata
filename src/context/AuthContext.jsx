@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 // Create context
 export const AuthContext = createContext();
 
-export default AuthContext;
-
 export const AuthProvider = ({ children }) => {
   const [authTokens, setAuthTokens] = useState(() =>
     localStorage.getItem("authTokens")
@@ -28,12 +26,17 @@ export const AuthProvider = ({ children }) => {
         logoutUser();
       } else {
         setUser(decodedUser);
+
+        // Redirect to dashboard if the user is an admin
+        if (decodedUser.is_admin) {
+          navigate("/dashboard");
+        }
       }
     }
     setLoading(false);
-  }, [authTokens]);
+  }, [authTokens, navigate]);
 
-  async function loginUser(email, password) {
+  const loginUser = async (email, password) => {
     try {
       const response = await fetch("http://127.0.0.1:8000/api/token/", {
         method: "POST",
@@ -51,16 +54,21 @@ export const AuthProvider = ({ children }) => {
         setAuthTokens(data);
         setUser(userData);
 
-        navigate("/");
+        // Redirect to dashboard if the user is an admin
+        if (userData.is_admin) {
+          navigate("/dashboard");
+        } else {
+          navigate("/");
+        }
         return true;
       } else {
-        return false;
+        throw new Error(data.detail || "Login failed");
       }
     } catch (error) {
       console.error("Login error:", error);
       return false;
     }
-  }
+  };
 
   const registerUser = async (username, email, password, password2) => {
     try {
@@ -81,11 +89,11 @@ export const AuthProvider = ({ children }) => {
         return { status: 201 };
       } else {
         const errorData = await response.json();
-        return { status: response.status, errorData };
+        throw new Error(errorData.detail || "Registration failed");
       }
     } catch (error) {
       console.error("Registration failed:", error);
-      return { status: 500 };
+      return { status: 500, errorData: error.message };
     }
   };
 
@@ -96,8 +104,6 @@ export const AuthProvider = ({ children }) => {
     navigate("/");
   };
 
-  
-
   const contextData = {
     authTokens,
     setAuthTokens,
@@ -106,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     registerUser,
     logoutUser,
-
   };
 
   return (

@@ -1,23 +1,22 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Import Link
-import { useCampaigns } from "../../context/campaignContext";
+import { Link } from "react-router-dom";
+import { useCampaigns } from "../../context/CampaignContext";
 
 const CampaignList = () => {
     const { campaigns, loading } = useCampaigns();
 
     if (loading) return <div>Loading campaigns...</div>;
 
+    // Filter campaigns to show only approved ones
+    const approvedCampaigns = campaigns.filter((campaign) => campaign.status === "approved");
+
     return (
         <div className="flex justify-center p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {campaigns.map((campaign) => {
-                    // Ensure values exist
+                {approvedCampaigns.map((campaign) => {
                     const raisedAmount = campaign.raised || 0;
                     const goalAmount = campaign.goal || 1; // Avoid division by zero
                     const progressPercentage = Math.min((raisedAmount / goalAmount) * 100, 100);
-
-                    // Use the first image if it's an array
-                  //  const imageSrc = Array.isArray(campaign.images) ? campaign.images[0] : campaign.images;
 
                     return (
                         <Link
@@ -51,9 +50,8 @@ const CampaignList = () => {
                                 <div className="mb-4">
                                     <div className="relative h-2 bg-gray-200 rounded-full">
                                         <div
-                                            className={`absolute top-0 left-0 h-full ${
-                                                progressPercentage >= 100 ? "bg-green-500" : "bg-blue-500"
-                                            } rounded-full`}
+                                            className={`absolute top-0 left-0 h-full ${progressPercentage >= 100 ? "bg-green-500" : "bg-blue-500"
+                                                } rounded-full`}
                                             style={{ width: `${progressPercentage}%` }}
                                         ></div>
                                     </div>

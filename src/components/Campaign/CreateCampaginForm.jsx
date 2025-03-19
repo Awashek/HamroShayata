@@ -1,11 +1,13 @@
 import React, { useState, useContext } from "react";
 import CbgImage from "../../assets/images/form-bg.jpg";
-import AuthContext from "../../context/Authcontext";
-import { useCampaigns } from "../../context/campaignContext";
-
+import { AuthContext } from "../../context/AuthContext";
+import { useCampaigns } from "../../context/CampaignContext";
+import { useNavigate } from "react-router-dom";
 const CreateCampaignForm = () => {
     const { authTokens } = useContext(AuthContext);
     const { createCampaign } = useCampaigns();
+    const navigate = useNavigate();
+
     const [step, setStep] = useState(1);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +22,7 @@ const CreateCampaignForm = () => {
         category: '',
         images: null,
         citizenship_id: null,
+        status: 'pending', // Default status
     });
 
 
@@ -43,7 +46,7 @@ const CreateCampaignForm = () => {
             [name]: files.length > 1 ? Array.from(files) : files[0], // Convert FileList to Array
         }));
     };
-    
+
 
     const validateStep = () => {
         let newErrors = {};
@@ -73,24 +76,24 @@ const CreateCampaignForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         if (!authTokens) {
             alert("You must be logged in to create a campaign.");
             return;
         }
-    
+
         if (!validateStep()) return;
-    
+
         setIsSubmitting(true);
         setErrors({});
-    
+
         const goalAmount = parseFloat(formData.goal_amount);
         if (isNaN(goalAmount)) {
             setErrors({ goal_amount: "A valid number is required." });
             setIsSubmitting(false);
             return;
         }
-    
+
         const deadlineDate = new Date(formData.deadline);
         if (isNaN(deadlineDate.getTime())) {
             setErrors({ deadline: "Date format must be YYYY-MM-DD." });
@@ -98,9 +101,9 @@ const CreateCampaignForm = () => {
             return;
         }
         const formattedDeadline = deadlineDate.toISOString().split("T")[0];
-    
+
         const formDataToSend = new FormData();
-        
+
         Object.keys(formData).forEach((key) => {
             if (formData[key]) {
                 if (key === "goal_amount") {
@@ -118,9 +121,9 @@ const CreateCampaignForm = () => {
                 }
             }
         });
-    
+
         console.log("Submitting form data:", Object.fromEntries(formDataToSend.entries()));
-    
+
         try {
             const result = await createCampaign(formDataToSend);
             if (result.status === 201) {
@@ -135,8 +138,10 @@ const CreateCampaignForm = () => {
                     category: '',
                     images: null,
                     citizenship_id: null,
+                    status: 'pending',
                 });
                 setStep(1);
+                navigate("/");
             } else if (result.errorData) {
                 setErrors(result.errorData);
             } else {
@@ -149,7 +154,7 @@ const CreateCampaignForm = () => {
             setIsSubmitting(false);
         }
     };
-    
+
 
     return (
         <>
@@ -277,6 +282,7 @@ const CreateCampaignForm = () => {
                                         className="bg-[#23c667] text-white py-2 px-6 rounded-lg hover:bg-[#1ba656] transition-all duration-300"
                                     >
                                         {isSubmitting ? 'Submitting...' : 'Submit'}
+                                       
                                     </button>
                                 )}
                             </div>

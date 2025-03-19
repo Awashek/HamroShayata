@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AuthContext from './Authcontext';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { AuthContext } from "./AuthContext";
 
 const CampaignContext = createContext();
 
@@ -16,11 +16,17 @@ export const CampaignProvider = ({ children }) => {
 
     const fetchCampaigns = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/campaigns/', {
+            const headers = authTokens
+                ? { Authorization: `Bearer ${authTokens.access}` }
+                : {};
+
+            const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
+                    ...headers,
                 },
             });
+
             if (!response.ok) throw new Error("Failed to fetch campaigns");
             const data = await response.json();
             setCampaigns(data);
@@ -33,17 +39,17 @@ export const CampaignProvider = ({ children }) => {
 
     const createCampaign = async (campaignData) => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/campaigns/', {
-                method: 'POST',
+            const response = await fetch("http://127.0.0.1:8000/api/campaigns/", {
+                method: "POST",
                 headers: {
                     Authorization: `Bearer ${authTokens?.access}`,
                 },
-                body: campaignData, // Send FormData directly here
+                body: campaignData,
             });
+
             const data = await response.json();
 
             if (!response.ok) {
-                console.error("Server response error:", data);
                 throw new Error(data.detail || JSON.stringify(data));
             }
 
@@ -55,21 +61,22 @@ export const CampaignProvider = ({ children }) => {
         }
     };
 
-
-
     const updateCampaign = async (id, updatedData) => {
         try {
             const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/`, {
-                method: 'PUT',
+                method: "PUT",
                 headers: {
                     Authorization: `Bearer ${authTokens?.access}`,
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify(updatedData),
             });
+
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || "Error updating campaign");
-            setCampaigns((prev) => prev.map((campaign) => (campaign.id === id ? data : campaign)));
+            setCampaigns((prev) =>
+                prev.map((campaign) => (campaign.id === id ? data : campaign))
+            );
             return { status: response.status, data };
         } catch (error) {
             console.error("Error updating campaign:", error);
@@ -80,12 +87,12 @@ export const CampaignProvider = ({ children }) => {
     const deleteCampaign = async (id) => {
         try {
             const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/`, {
-                method: 'DELETE',
+                method: "DELETE",
                 headers: {
                     Authorization: `Bearer ${authTokens?.access}`,
-                    'Content-Type': 'application/json',
                 },
             });
+
             if (!response.ok) throw new Error("Error deleting campaign");
             setCampaigns((prev) => prev.filter((campaign) => campaign.id !== id));
             return { status: 204 };
@@ -96,7 +103,9 @@ export const CampaignProvider = ({ children }) => {
     };
 
     return (
-        <CampaignContext.Provider value={{ campaigns, loading, createCampaign, updateCampaign, deleteCampaign }}>
+        <CampaignContext.Provider
+            value={{ campaigns, loading, createCampaign, updateCampaign, deleteCampaign }}
+        >
             {children}
         </CampaignContext.Provider>
     );

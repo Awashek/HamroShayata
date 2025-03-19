@@ -4,7 +4,7 @@ import logo from '../../assets/images/logo.png';
 import LogIn from '../LogIn/LogIn';
 import SignUp from '../SignUp/SignUp';
 import { jwtDecode } from 'jwt-decode';
-import AuthContext from '../../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {

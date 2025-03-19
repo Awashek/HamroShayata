@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom"; 
-import AuthContext from "../../context/Authcontext";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 const LogIn = ({ onLoginSuccess }) => {
-    const { setAuthTokens, setUser, loginUser } = useContext(AuthContext); 
-    const navigate = useNavigate(); 
+    const { loginUser } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -31,10 +31,10 @@ const LogIn = ({ onLoginSuccess }) => {
             return;
         }
 
-        const loginSuccess = await loginUser(email, password, setAuthTokens, setUser, navigate);
+        const loginSuccess = await loginUser(email, password);
 
         if (loginSuccess) {
-            onLoginSuccess();  // Calling the function to close the modal and navigate
+            onLoginSuccess(); // Call the function to close the modal or perform other actions
         } else {
             setError("Login failed. Please check your credentials.");
         }
@@ -83,7 +83,5 @@ const LogIn = ({ onLoginSuccess }) => {
         </div>
     );
 };
-
-
 
 export default LogIn;
