@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import useAxios from "../../utils/useAxios";
 import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "../../context/AuthContext";
+import SubscriptionStatus from "../Subscription/SubscriptionStatus";
 const UserProfile = () => {
     const [res, setRes] = useState("");
     const [userData, setUserData] = useState(null);
@@ -108,6 +109,8 @@ const UserProfile = () => {
                     </li>
                 </ul>
             </div>
+
+            <SubscriptionStatus />
         </div>
     );
 };

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 
@@ -11,6 +12,7 @@ export const CampaignProvider = ({ children }) => {
     const { authTokens } = useContext(AuthContext);
 
     useEffect(() => {
+        
         fetchCampaigns();
     }, []);
 
@@ -46,18 +48,25 @@ export const CampaignProvider = ({ children }) => {
                 },
                 body: campaignData,
             });
-
+    
             const data = await response.json();
-
+    
             if (!response.ok) {
-                throw new Error(data.detail || JSON.stringify(data));
+                // Handle backend validation errors
+                if (data.detail && Array.isArray(data.detail)) {
+                    throw new Error(data.detail.join(", ")); // Convert array of errors to a string
+                } else if (data.detail) {
+                    throw new Error(data.detail); // Handle single error message
+                } else {
+                    throw new Error("Failed to create campaign. Please try again.");
+                }
             }
-
+    
             setCampaigns((prev) => [...prev, data]);
             return { status: response.status, data };
         } catch (error) {
             console.error("Error creating campaign:", error);
-            return { status: 500, errorData: error.message };
+            throw error; // Re-throw the error to handle it in the form component
         }
     };
 

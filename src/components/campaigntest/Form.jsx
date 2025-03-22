@@ -1,12 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { useCampaigns } from '../../context/CampaignContext';
 import { AuthContext } from '../../context/AuthContext';
-import useAxios from '../../utils/useAxios'; // import useAxios
 
 const Form = () => {
     const { createCampaign } = useCampaigns();
-    const { authTokens, setUser } = useContext(AuthContext);
-    //const api = useAxios(); // get axios instance from useAxios hook
+    const { authTokens } = useContext(AuthContext);
 
     const [formData, setFormData] = useState({
         first_name: '',
@@ -85,11 +83,9 @@ const Form = () => {
             }
         });
 
-        console.log("Submitting form data:", Object.fromEntries(formDataToSend.entries()));
-
         try {
-            const result = await createCampaign(formDataToSend);
-            if (result.status === 201) {
+            const response = await createCampaign(formDataToSend);
+            if (response.status === 201) {
                 alert("Campaign created successfully! It is now pending admin approval.");
                 setFormData({
                     first_name: '',
@@ -103,22 +99,20 @@ const Form = () => {
                     citizenship_id: null,
                     status: 'pending',
                 });
-
-                // Fetch updated user profile to get the latest reward points
-                //const profileResponse = await api.get("/profile/"); // Now using api instance
-                //setUser(profileResponse.data); // Change this line
-                //setRewardPoints(profileResponse.data.reward_points);
             } else {
-                setErrors(result.errorData || { general: "Something went wrong!" });
+                setErrors(response.errorData || { general: "Something went wrong!" });
             }
         } catch (error) {
-            alert("Network error. Please try again.");
-            console.error("Error details:", error);
+            console.error("Error creating campaign:", error);
+            if (error.message.includes("Campaign limit reached")) {
+                setErrors({ general: "You have reached the maximum number of campaigns. Please upgrade your subscription." });
+            } else {
+                setErrors({ general: error.message || "Network error. Please try again." });
+            }
         } finally {
             setIsSubmitting(false);
         }
     };
-
 
     return (
         <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-4">

@@ -281,8 +281,7 @@ const CreateCampaignForm = () => {
                                         type="submit"
                                         className="bg-[#23c667] text-white py-2 px-6 rounded-lg hover:bg-[#1ba656] transition-all duration-300"
                                     >
-                                        {isSubmitting ? 'Submitting...' : 'Submit'}
-                                       
+                                        {isSubmitting ? 'Submitting...' : 'Submit'}                                       
                                     </button>
                                 )}
                             </div>

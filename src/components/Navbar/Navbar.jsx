@@ -65,11 +65,19 @@ const Navbar = () => {
         }
     };
 
+    // Extract the first letter of the user's first name
+    const getFirstLetter = () => {
+        if (userData && userData.username) {
+            return userData.username.charAt(0).toUpperCase();
+        }
+        return "U"; // Default letter if no first name is available
+    };
+
     return (
         <nav className="fixed top-0 left-0 right-0 bg-[#1C9FDD] shadow-md z-50 px-4 py-4 sm:px-6 lg:px-12 flex items-center justify-between h-[80px]">
             <div>
                 <Link to="/">
-                <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
+                    <img src={logo} alt="Logo" className="h-10 md:h-16 lg:h-20" />
                 </Link>
             </div>
 
@@ -83,20 +91,18 @@ const Navbar = () => {
                     </Link>
                 ) : (
                     <div className="relative">
-                        <img
-                            src={userData.profile_image || "https://via.placeholder.com/40"}
-                            alt="User Profile"
-                            className="h-10 w-10 rounded-full cursor-pointer border-2 border-white hover:border-gray-300"
+                        <div
+                            className="h-10 w-10 rounded-full cursor-pointer border-2 border-white hover:border-gray-300 flex items-center justify-center bg-white text-[#1C9FDD] font-bold text-lg"
                             onClick={() => setShowDropdown(prev => !prev)}
-                        />
+                        >
+                            {getFirstLetter()}
+                        </div>
                         {showDropdown && (
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
                                 <Link to="/userprofile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                                     Profile
                                 </Link>
-                                <Link to="/dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                                    Dashboard
-                                </Link>
+                                
                                 <button onClick={logoutUser} className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
                                     Log Out
                                 </button>
