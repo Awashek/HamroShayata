@@ -11,11 +11,13 @@ import PrivateRoute from './utils/PrivateRoute';
 import LogIn from './components/LogIn/LogIn';
 import { AuthProvider } from './context/AuthContext';
 import { CampaignProvider } from './context/CampaignContext';
-import Form from './components/campaigntest/Form';
+// import Form from './components/campaigntest/Form';
 import CampaignList from './components/campaigntest/CampaignList';
 import CampaignDetailTest from './components/campaigntest/CampaignDetailTest';
 import SubscriptionPlans from './components/Subscription/SubscriptionPlan';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import AllCampaigns from './components/campaigntest/AllCampaigns';
+import { DonationProvider } from './context/DonationContext';
 
 
 function App() {
@@ -23,6 +25,7 @@ function App() {
     <Router>
       <AuthProvider>
         <CampaignProvider>
+          <DonationProvider>
           <SubscriptionProvider>
             <Navbar />
             <div className="pt-[80px]">
@@ -34,16 +37,17 @@ function App() {
                     <>
                       <Hero />
                       <Category />
-                      <CampaignList />
+                      <CampaignList isHomePage={true}/>
                       <SubscriptionPlans />
-                     
-                      <Form />
+                      {/* <Form /> */}
+                 
                       
 
                     </>
                   } />
                   
                   <Route path="/campaigns/:id" element={<CampaignDetailTest />} />
+                  <Route path="/all-campaigns" element={<AllCampaigns />} />
 
 
                   {/* Private Routes */}
@@ -56,13 +60,12 @@ function App() {
                   <Route path="/userprofile" element={<PrivateRoute />} >
                     <Route path="/userprofile" element={<UserProfile />} />
                   </Route>
-
-
                 </Routes>
               </Suspense>
             </div>
             <Footer />
           </SubscriptionProvider>
+          </DonationProvider>
         </CampaignProvider>
       </AuthProvider>
     </Router>

@@ -215,7 +215,8 @@ const CreateCampaignForm = () => {
                                             <option value="">Select a category</option>
                                             <option value="medical">Medical</option>
                                             <option value="education">Education</option>
-                                            <option value="community">Community</option>
+                                            <option value="environment">Environment</option>
+                                            <option value="animal">Animal</option>
                                         </select>
                                         {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
                                     </div>
