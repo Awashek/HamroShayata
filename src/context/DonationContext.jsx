@@ -18,9 +18,11 @@ export const DonationProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState(null);
+    const [campaigns, setCampaigns] = useState([]);
     const { authTokens } = useContext(AuthContext);
     const navigate = useNavigate();
     const axiosInstance = useAxios();
+
 
     const updateCampaignAmount = useCallback((campaignId, amount) => {
         setCampaigns(prevCampaigns =>
@@ -36,6 +38,8 @@ export const DonationProvider = ({ children }) => {
     }, []);
 
     const fetchDonations = useCallback(async () => {
+        if (loading) return; // Skip if already loading
+
         try {
             setLoading(true);
             const response = await axiosInstance.get("donations/");
@@ -47,66 +51,30 @@ export const DonationProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [axiosInstance]);
+    }, [axiosInstance, loading]); // Add loading to dependencies
 
-    const initiateDonation = async (campaignId, amount, message = '') => {
+    const initiateDonation = async (campaignId, amountInRs, message = '') => {
         try {
             setLoading(true);
             setError(null);
-            setPaymentStatus('initiating');
-
-            // Validate amount
-            if (isNaN(amount) || amount < 1) {
-                throw new Error('Amount must be at least Rs. 1');
+    
+            // Validate Rs amount (e.g., minimum Rs 10)
+            if (amountInRs < 10) {
+                throw new Error("Minimum donation is Rs 10");
             }
-
+    
             const response = await axiosInstance.post("donations/initiate/", {
                 campaign_id: campaignId,
-                amount: Math.round(amount * 100), // Convert to paisa
+                amount: amountInRs,  // Send Rs amount (backend converts to paisa)
                 message
             });
-
-            if (!response.data.payment_url) {
-                throw new Error('No payment URL received from server');
-            }
-
-            // First try to open in new tab
-            let paymentWindow = window.open(
-                response.data.payment_url,
-                '_blank'
-            );
-
-            // If blocked, show instructions
-            if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed === 'undefined') {
-                // Fallback 1: Try to open with window features
-                paymentWindow = window.open(
-                    response.data.payment_url,
-                    'khalti_payment',
-                    'width=500,height=700,scrollbars=yes'
-                );
-
-                // If still blocked, show user-friendly message
-                if (!paymentWindow || paymentWindow.closed) {
-                    setError('Please enable popups for this site to complete your payment');
-                    setPaymentStatus('popup_blocked');
-                    return {
-                        ...response.data,
-                        popup_blocked: true,
-                        payment_url: response.data.payment_url
-                    };
-                }
-            }
-
-            setPaymentStatus('pending');
+    
+            // Open Khalti payment window
+            window.open(response.data.payment_url, "_blank");
+            
             return response.data;
-
         } catch (error) {
-            console.error("Donation initiation error:", error);
-            const errorMessage = error.response?.data?.detail ||
-                error.message ||
-                'Payment initiation failed';
-            setError(errorMessage);
-            setPaymentStatus('failed');
+            setError(error.response?.data?.detail || error.message);
             throw error;
         } finally {
             setLoading(false);
@@ -124,7 +92,7 @@ export const DonationProvider = ({ children }) => {
             );
 
             setPaymentStatus(response.data.status);
-            
+
             // Update the campaign amount locally
             if (response.data.status === 'Completed' && response.data.campaign && response.data.amount) {
                 updateCampaignAmount(response.data.campaign, response.data.amount);
@@ -168,7 +136,7 @@ export const DonationProvider = ({ children }) => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(
-                "donations/history/"
+                "donations/"
             );
             setDonations(response.data);
             setError(null);
@@ -193,7 +161,7 @@ export const DonationProvider = ({ children }) => {
                 verifyDonation,
                 fetchDonations,
                 getCampaignDonations,
-                getUserDonations
+                getUserDonations,
             }}
         >
             {children}

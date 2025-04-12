@@ -11,6 +11,8 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
     const { initiateDonation, loading } = useDonations();
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleDonate = async (e) => {
         e.preventDefault();
@@ -28,12 +30,13 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
 
         try {
             setError(null);
+            setSuccessMessage('');
             const response = await initiateDonation(campaignId, amount.toFixed(2), message);
             
             if (response?.popup_blocked) {
                 setShowPopupHelp(true);
             } else if (response?.success) {
-                // Call the refresh function after successful donation
+                setSuccessMessage('Payment initiated successfully! Check your email for confirmation.');
                 if (onDonationSuccess) {
                     onDonationSuccess();
                 }
@@ -43,6 +46,7 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
             console.error('Donation error:', err);
         }
     };
+
 
     const handleManualRedirect = () => {
         window.location.href = error.payment_url;

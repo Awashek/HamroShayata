@@ -7,44 +7,75 @@ import { AuthContext } from "../context/AuthContext";
 const baseURL = "http://127.0.0.1:8000/api/";
 
 const useAxios = () => {
-    const { authTokens, setUser, setAuthTokens } = useContext(AuthContext);
+    const { authTokens, setUser, setAuthTokens, logoutUser } = useContext(AuthContext);
 
-    // Create basic axios instance without auth headers
-    const axiosInstance = axios.create({ baseURL });
+    const axiosInstance = axios.create({
+        baseURL,
+        headers: {
+            "Content-Type": "application/json",
+        }
+    });
 
-    // If authTokens exist, add authorization and interceptors
-    if (authTokens) {
-        // Set initial auth header
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${authTokens.access}`;
+    // Add request interceptor
+    axiosInstance.interceptors.request.use(
+        async (config) => {
+            if (!authTokens?.access) {
+                return config;
+            }
 
-        // Add request interceptor for token refresh
-        axiosInstance.interceptors.request.use(async (req) => {
+            // Decode token and check expiration
+            const user = jwtDecode(authTokens.access);
+            const isExpired = dayjs.unix(user.exp).diff(dayjs()) < 1;
+
+            // If token is still valid, add to headers
+            if (!isExpired) {
+                config.headers.Authorization = `Bearer ${authTokens.access}`;
+                return config;
+            }
+
+            // Token expired, try to refresh
             try {
-                const user = jwtDecode(authTokens.access);
-                const isExpired = dayjs.unix(user.exp).diff(dayjs()) < 1;
-
-                if (!isExpired) return req;
-
                 const response = await axios.post(`${baseURL}token/refresh/`, {
                     refresh: authTokens.refresh,
                 });
 
-                localStorage.setItem("authTokens", JSON.stringify(response.data));
-                setAuthTokens(response.data);
-                setUser(jwtDecode(response.data.access));
+                // Update tokens in state and storage
+                const newTokens = {
+                    access: response.data.access,
+                    refresh: authTokens.refresh // Keep the same refresh token
+                };
 
-                req.headers.Authorization = `Bearer ${response.data.access}`;
-                return req;
-            } catch (error) {
-                console.error("Token refresh failed:", error);
-                // Remove invalid token
-                localStorage.removeItem("authTokens");
-                setAuthTokens(null);
-                setUser(null);
-                return req; // Continue with the original request
+                localStorage.setItem("authTokens", JSON.stringify(newTokens));
+                setAuthTokens(newTokens);
+                setUser(jwtDecode(newTokens.access));
+
+                // Update the request headers
+                config.headers.Authorization = `Bearer ${newTokens.access}`;
+                return config;
+            } catch (refreshError) {
+                console.error("Token refresh failed:", refreshError);
+                logoutUser();
+                throw new Error("Session expired. Please log in again.");
             }
-        });
-    }
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
+
+    // Add response interceptor for error handling
+    axiosInstance.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 403) {
+                // Handle 403 Forbidden (admin access required)
+                console.error("Admin access required");
+                logoutUser();
+                throw new Error("You don't have permission to access this resource");
+            }
+            return Promise.reject(error);
+        }
+    );
 
     return axiosInstance;
 };

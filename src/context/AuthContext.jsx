@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [userCount, setUserCount] = useState(0);
   const [authTokens, setAuthTokens] = useState(() =>
     localStorage.getItem("authTokens")
       ? JSON.parse(localStorage.getItem("authTokens"))
@@ -14,7 +15,6 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -97,6 +97,60 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      return {
+        success: response.ok,
+        message: response.ok
+          ? "Password reset link sent to your email"
+          : data.detail || "Failed to send reset email",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Network error. Please try again.",
+      };
+    }
+  };
+
+  const resetPassword = async (token, newPassword, newPassword2) => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/password-reset/confirm/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          new_password: newPassword,
+          new_password2: newPassword2
+        }),
+      });
+
+      const data = await response.json();
+      return {
+        success: response.ok,
+        message: response.ok
+          ? "Password has been reset successfully"
+          : data.detail || "Failed to reset password",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Network error. Please try again.",
+      };
+    }
+  };
+
   const logoutUser = () => {
     setAuthTokens(null);
     setUser(null);
@@ -112,6 +166,11 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     registerUser,
     logoutUser,
+    userCount,
+    setUserCount,
+    forgotPassword,
+    resetPassword,
+    getAccessToken: () => authTokens?.access
   };
 
   return (

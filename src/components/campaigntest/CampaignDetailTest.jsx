@@ -2,19 +2,49 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import DonationButton from "../Donation/DonationButton";
-
+import useAxios from "../../utils/useAxios";
+import CampaignDonors from "./CampaginDonors";
+import CampaignShare from "./CampaignShare";
 const CampaignDetailTest = () => {
     const { id } = useParams();
-    const { user } = useContext(AuthContext);
+    const { user, authTokens } = useContext(AuthContext);
     const navigate = useNavigate();
-
+    const axiosInstance = useAxios();
     const [campaign, setCampaign] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
+    const [replyingTo, setReplyingTo] = useState(null);
+    const [replyText, setReplyText] = useState("");
+    const [showAllComments, setShowAllComments] = useState(false);
+    const [expandedReplies, setExpandedReplies] = useState({});
+    const [donors, setDonors] = useState([]);
+    const [shareStats, setShareStats] = useState({
+        total_shares: 0,
+        platform_counts: []
+    })
 
-    // Add this function to refresh campaign data
+    const fetchShareStats = async () => {
+        try {
+            const response = await axiosInstance.get(`/campaigns/${id}/share_stats/`);
+            setShareStats(response.data);
+        } catch (error) {
+            console.error('Error fetching share stats:', error);
+        }
+    };
+
+
+    const calculateDaysLeft = (endDate) => {
+        const today = new Date();
+        const end = new Date(endDate);
+        const timeDiff = end - today;
+        const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        return daysLeft > 0 ? daysLeft : 0; // Returns 0 if deadline has passed
+    };
+
+
+
     const refreshCampaign = async () => {
         try {
             const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/`);
@@ -26,43 +56,47 @@ const CampaignDetailTest = () => {
         }
     };
 
-    useEffect(() => {
-        fetchCampaignDetail();
-        fetchComments();
-    }, [id]);
-
     const fetchCampaignDetail = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/campaigns/${id}/`);
-            if (!response.ok) throw new Error("Failed to fetch campaign details");
-            const data = await response.json();
-            setCampaign(data);
+            setLoading(true);
+            const response = await axiosInstance.get(`/campaigns/${id}/`);
+            setCampaign({
+                ...response.data  // Now using all data from the response directly
+            });
         } catch (error) {
-            setError(error.message);
+            setError(error.response?.data?.detail || error.message);
+            console.error("Campaign fetch error:", {
+                status: error.response?.status,
+                data: error.response?.data
+            });
         } finally {
             setLoading(false);
         }
     };
 
+
     const fetchComments = async () => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/comments/?campaign=${id}`, {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const headers = {
+                "Content-Type": "application/json",
+            };
 
-            console.log("Comments response status:", response.status); // Debugging line
+            if (authTokens) {
+                headers["Authorization"] = `Bearer ${authTokens.access}`;
+            }
+
+            const response = await fetch(`http://127.0.0.1:8000/api/comments/?campaign=${id}`, {
+                headers: headers,
+            });
 
             if (!response.ok) {
                 throw new Error("Failed to fetch comments");
             }
 
             const data = await response.json();
-            console.log("Comments data:", data); // Debugging line
             setComments(data);
         } catch (error) {
-            console.error("Error fetching comments:", error); // Debugging line
+            console.error("Error fetching comments:", error);
             setError(error.message);
         }
     };
@@ -84,38 +118,204 @@ const CampaignDetailTest = () => {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authTokens.access}`
                 },
                 body: JSON.stringify({
-                    campaign: id,  // Ensure this is being sent
-                    text: newComment,
+                    campaign: parseInt(id),
+                    text: newComment
                 }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error("Error details:", errorData);
                 throw new Error(errorData.detail || "Failed to post comment");
             }
 
             const data = await response.json();
-            setComments([...comments, data]);  // Add new comment to state
-            setNewComment("");  // Clear input field
+            setComments([...comments, data]);
+            setNewComment("");
+            fetchComments(); // Refresh comments to get nested structure
         } catch (error) {
+            console.error("Full error:", error);
             alert("Error: " + error.message);
         }
     };
+
+    const handleReplySubmit = async (parentId) => {
+        if (!user) {
+            alert("You must be logged in to reply.");
+            navigate("/login");
+            return;
+        }
+
+        if (!replyText.trim()) {
+            alert("Reply cannot be empty.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/comments/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authTokens.access}`
+                },
+                body: JSON.stringify({
+                    campaign: parseInt(id),
+                    parent: parentId,
+                    text: replyText
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Error details:", errorData);
+                throw new Error(errorData.detail || "Failed to post reply");
+            }
+
+            const data = await response.json();
+            setReplyText("");
+            setReplyingTo(null);
+            fetchComments(); // Refresh comments to get nested structure
+        } catch (error) {
+            console.error("Full error:", error);
+            alert("Error: " + error.message);
+        }
+    };
+
+    const toggleReplies = (commentId) => {
+        setExpandedReplies(prev => ({
+            ...prev,
+            [commentId]: !prev[commentId]
+        }));
+    };
+
+    const renderComments = (comments, depth = 0) => {
+        return comments.map((comment) => (
+            <div
+                key={comment.id}
+                className={`mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition-all ${depth > 0 ? 'ml-8' : ''}`}
+                style={{ marginLeft: `${depth * 2}rem` }}
+            >
+                <div className="flex items-center mb-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                        {comment.user.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="ml-2 font-semibold">{comment.user}</span>
+                    <span className="ml-2 text-sm text-gray-500">
+                        {new Date(comment.created_at).toLocaleString()}
+                    </span>
+                </div>
+                <p className="text-gray-700">{comment.text}</p>
+
+                <div className="flex mt-2 space-x-4">
+                    {user && (
+                        <button
+                            onClick={() => setReplyingTo(comment.id)}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                        >
+                            Reply
+                        </button>
+                    )}
+
+                    {comment.replies && comment.replies.length > 0 && (
+                        <button
+                            onClick={() => toggleReplies(comment.id)}
+                            className="text-sm text-gray-600 hover:text-gray-800 flex items-center"
+                        >
+                            {expandedReplies[comment.id] ? (
+                                <>
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                                    </svg>
+                                    Hide {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                    Show {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
+
+                {replyingTo === comment.id && (
+                    <div className="mt-3">
+                        <textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write a reply..."
+                            className="border border-gray-200 p-3 rounded-xl w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            rows="2"
+                        />
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                onClick={() => handleReplySubmit(comment.id)}
+                                className="bg-blue-600 text-white py-1 px-4 rounded-lg hover:bg-blue-700 transition-all"
+                            >
+                                Post Reply
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setReplyingTo(null);
+                                    setReplyText("");
+                                }}
+                                className="bg-gray-200 text-gray-700 py-1 px-4 rounded-lg hover:bg-gray-300 transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {comment.replies && comment.replies.length > 0 && expandedReplies[comment.id] && (
+                    <div className="mt-3">
+                        {renderComments(comment.replies, depth + 1)}
+                    </div>
+                )}
+            </div>
+        ));
+    };
+
+    useEffect(() => {
+        const updateDaysLeft = () => {
+            // This will trigger a re-render with updated days left
+            setCampaign(prev => ({ ...prev }));
+        };
+
+        // Update immediately when component mounts
+        updateDaysLeft();
+
+        // Then update every 24 hours
+        const interval = setInterval(updateDaysLeft, 24 * 60 * 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+
+    useEffect(() => {
+        fetchCampaignDetail();
+        fetchComments();
+        fetchShareStats();
+    }, [id]);
 
     if (loading) return <div>Loading campaign details...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
     if (!campaign) return <div>Campaign not found.</div>;
 
-    // Use campaign.current_amount instead of raised_amount
     const raisedAmount = parseFloat(campaign.current_amount || 0);
     const goalAmount = parseFloat(campaign.goal_amount || 1);
     const progressPercentage = Math.min((raisedAmount / goalAmount) * 100, 100);
 
+    // Display only top 3 comments if showAllComments is false
+    const displayedComments = showAllComments ? comments : comments.slice(0, 3);
+
     return (
         <div className="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Campaign Content - 2/3 width */}
             <div className="lg:col-span-2 bg-white shadow-lg rounded-2xl p-6">
                 <img
                     src={campaign.images}
@@ -134,17 +334,15 @@ const CampaignDetailTest = () => {
                         ></div>
                     </div>
                     <div className="flex justify-between mt-3 text-sm">
-                        <span className="text-gray-800 font-bold text-lg">${raisedAmount.toLocaleString()} raised</span>
+                        <span className="text-gray-800 font-bold text-lg">Rs {raisedAmount.toLocaleString()} raised</span>
                         <span className="text-green-600 font-bold text-lg">{progressPercentage.toFixed(0)}% funded</span>
                     </div>
 
-                    {/* Add the Donation Button here */}
-                    <DonationButton 
-                campaignId={id} 
-                onDonationSuccess={refreshCampaign} // Add this prop
-            />
+                    <DonationButton
+                        campaignId={id}
+                        onDonationSuccess={refreshCampaign}
+                    />
                 </div>
-
 
                 {/* Comment Section */}
                 <div className="mt-10">
@@ -152,20 +350,41 @@ const CampaignDetailTest = () => {
                         <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                         </svg>
-                        Comments
+                        Comments ({comments.length})
                     </h2>
-                    {comments.map((comment) => (
-                        <div key={comment.id} className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:shadow-md transition-all">
-                            <div className="flex items-center mb-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                                    {comment.user.charAt(0).toUpperCase()}
-                                </div>
-                                <span className="ml-2 font-semibold">{comment.user}</span>
-                                <span className="ml-2 text-sm text-gray-500">{new Date(comment.created_at).toLocaleString()}</span>
-                            </div>
-                            <p className="text-gray-700">{comment.text}</p>
+
+                    {displayedComments.length > 0 ? (
+                        <>
+                            {renderComments(displayedComments)}
+
+                            {comments.length > 3 && (
+                                <button
+                                    onClick={() => setShowAllComments(!showAllComments)}
+                                    className="mt-6 w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all flex items-center justify-center"
+                                >
+                                    {showAllComments ? (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+                                            </svg>
+                                            Show Less
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                            Show All Comments ({comments.length - 3} more)
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-xl text-center">
+                            <p className="text-gray-600">No comments yet. Be the first to comment!</p>
                         </div>
-                    ))}
+                    )}
 
                     {user ? (
                         <div className="mt-6">
@@ -212,127 +431,40 @@ const CampaignDetailTest = () => {
                     </div>
                 </div>
 
+
                 {/* Top Donors List */}
-                <div className="bg-white shadow-lg rounded-2xl p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Top Donors</h2>
-                    <ul className="space-y-4">
-                        <li className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
-                                    S
-                                </div>
-                                <div className="ml-3">
-                                    <p className="font-medium">Sarah Johnson</p>
-                                    <p className="text-gray-500 text-sm">2 days ago</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-green-600">$250</span>
-                        </li>
-                        <li className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                    M
-                                </div>
-                                <div className="ml-3">
-                                    <p className="font-medium">Michael Chen</p>
-                                    <p className="text-gray-500 text-sm">5 days ago</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-green-600">$150</span>
-                        </li>
-                        <li className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">
-                                    A
-                                </div>
-                                <div className="ml-3">
-                                    <p className="font-medium">Ashley Wilson</p>
-                                    <p className="text-gray-500 text-sm">1 week ago</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-green-600">$100</span>
-                        </li>
-                        <li className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">
-                                    T
-                                </div>
-                                <div className="ml-3">
-                                    <p className="font-medium">Thomas Brown</p>
-                                    <p className="text-gray-500 text-sm">2 weeks ago</p>
-                                </div>
-                            </div>
-                            <span className="font-bold text-green-600">$75</span>
-                        </li>
-                    </ul>
-                    <button className="mt-4 w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-200 transition-all font-medium text-sm">
-                        View All Donors
-                    </button>
-                </div>
+                <CampaignDonors donors={donors} setDonors={setDonors} />
+
+
+
 
                 {/* Social Media Sharing */}
-                <div className="bg-white shadow-lg rounded-2xl p-6">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">Share This Campaign</h2>
-                    <p className="text-gray-600 mb-4">Help spread the word about this campaign!</p>
-                    <div className="grid grid-cols-2 gap-3">
-                        <button className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-all font-medium flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                            </svg>
-                            Facebook
-                        </button>
-                        <button className="bg-blue-400 text-white py-2 px-4 rounded-lg hover:bg-blue-500 transition-all font-medium flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 10.028 10.028 0 01-3.127 1.195 4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                            </svg>
-                            Twitter
-                        </button>
-                        <button className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-all font-medium flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                            </svg>
-                            LinkedIn
-                        </button>
-                        <button className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-all font-medium flex items-center justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.33 16.5c-.22.33-.67.5-1.11.5H7.33c-.44 0-.89-.17-1.11-.5-.22-.33-.22-.83 0-1.17L11.89 7.5c.22-.33.67-.5 1.11-.5s.89.17 1.11.5l4.44 7.83c.22.34.22.84 0 1.17z" />
-                            </svg>
-                            Email
-                        </button>
-                    </div>
-                    <div className="mt-4 relative">
-                        <input
-                            type="text"
-                            value={window.location.href}
-                            className="border border-gray-200 p-2 rounded-lg w-full pr-16 bg-gray-50"
-                            readOnly
-                        />
-                        <button className="absolute right-1 top-1 bg-gray-200 text-gray-800 py-1 px-3 rounded hover:bg-gray-300 transition-all text-sm">
-                            Copy
-                        </button>
-                    </div>
-                </div>
+                <CampaignShare campaignId={id} onShareSuccess={fetchShareStats} />
+
 
                 {/* Campaign Stats */}
                 <div className="bg-white shadow-lg rounded-2xl p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Campaign Stats</h2>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-blue-50 p-4 rounded-xl text-center">
-                            <p className="text-blue-800 font-bold text-2xl">{campaign.days_left || 15}</p>
+                            <p className="text-blue-800 font-bold text-2xl">
+                                {campaign?.deadline ? calculateDaysLeft(campaign.deadline) : 'N/A'}
+                            </p>
                             <p className="text-gray-600 text-sm">Days Left</p>
                         </div>
                         <div className="bg-green-50 p-4 rounded-xl text-center">
-                            <p className="text-green-800 font-bold text-2xl">{campaign.donors || 43}</p>
+                            <p className="text-green-800 font-bold text-2xl">{donors.length || 0}</p>
                             <p className="text-gray-600 text-sm">Donors</p>
                         </div>
+                        {/* Updated shares display */}
                         <div className="bg-purple-50 p-4 rounded-xl text-center">
-                            <p className="text-purple-800 font-bold text-2xl">{campaign.shares || 127}</p>
+                            <p className="text-purple-800 font-bold text-2xl">
+                                {shareStats.total_shares || 0}
+                            </p>
                             <p className="text-gray-600 text-sm">Shares</p>
                         </div>
-                        <div className="bg-yellow-50 p-4 rounded-xl text-center">
-                            <p className="text-yellow-800 font-bold text-2xl">{campaign.views || 1450}</p>
-                            <p className="text-gray-600 text-sm">Views</p>
-                        </div>
+
+
                     </div>
                 </div>
             </div>

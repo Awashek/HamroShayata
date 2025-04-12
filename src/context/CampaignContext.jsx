@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./AuthContext";
 import axios from 'axios';
+import { calculateDaysLeft } from "../utils/dateUtils";
 
 const CampaignContext = createContext();
 
@@ -22,29 +23,29 @@ export const CampaignProvider = ({ children }) => {
         try {
             setLoading(true);
             setError(null);
-            
+
             const config = {
                 headers: {}
             };
-            
+
             if (authTokens?.access) {
                 config.headers.Authorization = `Bearer ${authTokens.access}`;
             }
 
             const response = await axios.get("http://127.0.0.1:8000/api/campaigns/", config);
-            
-            // Ensure campaigns have current_amount with proper fallbacks
-            const campaignsWithAmounts = response.data.map(campaign => ({
+
+            const campaignsWithData = response.data.map(campaign => ({
                 ...campaign,
                 current_amount: parseFloat(campaign.current_amount || 0),
-                goal_amount: parseFloat(campaign.goal_amount || campaign.goal || 1)
+                goal_amount: parseFloat(campaign.goal_amount || campaign.goal || 1),
+                days_left: calculateDaysLeft(campaign.deadline)
             }));
 
-            setCampaigns(campaignsWithAmounts);
+            setCampaigns(campaignsWithData);
         } catch (err) {
             console.error("Error fetching campaigns:", err);
             setError(err.response?.data?.detail || err.message || "Failed to load campaigns");
-            setCampaigns([]); // Reset campaigns on error
+            setCampaigns([]);
         } finally {
             setLoading(false);
         }
@@ -67,12 +68,21 @@ export const CampaignProvider = ({ children }) => {
                     }
                 }
             );
-
             setCampaigns(prev => [...prev, response.data]);
-            return response.data;
+
+            // Return the full response object instead of just response.data
+            return {
+                status: response.status,
+                data: response.data,
+                success: true
+            };
         } catch (err) {
             console.error("Error creating campaign:", err);
-            throw err.response?.data || err;
+            return {
+                status: err.response?.status || 500,
+                errorData: err.response?.data || { general: err.message || "Unknown error" },
+                success: false
+            };
         } finally {
             setLoading(false);
         }

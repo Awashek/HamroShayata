@@ -1,6 +1,7 @@
 import React, { useState, useContext, useCallback } from "react";
 import { useSubscriptions } from "../../context/SubscriptionContext";
 import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Crown, Target, Award, CheckCircle2, Loader2 } from "lucide-react";
 
 const SubscriptionPlans = () => {
@@ -9,6 +10,8 @@ const SubscriptionPlans = () => {
   const [selectedPlan, setSelectedPlan] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   const subscriptionPlans = [
     { 
@@ -48,24 +51,31 @@ const SubscriptionPlans = () => {
   ];
 
   const handleSubscribe = useCallback(async () => {
-    if (loading || !authTokens) return;
+    if (loading) return;
+  
+    if (!authTokens) {
+      alert("You need to login to subscribe.");
+      navigate("/login");
+      return;
+    }
+  
     if (!selectedPlan) {
       setError("Please select a subscription plan.");
       return;
     }
-
+  
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setMonth(startDate.getMonth() + 1);
-
+  
     const subscriptionData = {
       subscription_type: selectedPlan,
       end_date: endDate.toISOString().split('T')[0],
     };
-
+  
     setLoading(true);
     setError("");
-
+  
     try {
       const result = await createSubscription(subscriptionData);
       if (result.status === 201) {
@@ -80,6 +90,7 @@ const SubscriptionPlans = () => {
       setLoading(false);
     }
   }, [loading, authTokens, selectedPlan, createSubscription]);
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">

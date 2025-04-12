@@ -1,33 +1,59 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCampaigns } from "../../context/CampaignContext";
 
-const CampaignList = ({ isHomePage = false, filterCategory = "all", searchQuery = "" }) => {
-    
+const CampaignList = ({ 
+    isHomePage = false, 
+    filterCategory = "all", 
+    searchQuery = "", 
+    currentPage = 1, 
+    itemsPerPage = 9,
+    onPaginationUpdate 
+}) => {
     const { campaigns, loading } = useCampaigns();
 
-    if (loading) return <div className="text-center text-lg font-semibold py-10">Loading campaigns...</div>;
-
-    // Filter approved campaigns
+    // Filter and paginate campaigns
     const approvedCampaigns = campaigns.filter((campaign) => campaign.status === "approved");
 
-    // Filter campaigns by category if a filter is applied
+    // Filter by category
     const filteredByCategory = filterCategory === "all"
         ? approvedCampaigns
         : approvedCampaigns.filter((campaign) => campaign.category === filterCategory);
 
-    // Filter campaigns by search query (case-insensitive)
+    // Filter by search query
     const filteredCampaigns = filteredByCategory.filter((campaign) =>
         campaign.campaign_title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Show only top 6 campaigns on the homepage
-    const displayedCampaigns = isHomePage ? approvedCampaigns.slice(0, 6) : filteredCampaigns;
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedCampaigns = isHomePage 
+        ? approvedCampaigns.slice(0, 6) 
+        : filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
+
+    // Update pagination in parent component
+    useEffect(() => {
+        if (!isHomePage && onPaginationUpdate) {
+            onPaginationUpdate(totalPages);
+        }
+    }, [totalPages, isHomePage, onPaginationUpdate]);
+
+    if (loading) return <div className="text-center text-lg font-semibold py-10">Loading campaigns...</div>;
+
+    if (!loading && paginatedCampaigns.length === 0) {
+        return (
+            <div className="text-center py-10">
+                <h3 className="text-xl font-semibold text-gray-700">No campaigns found</h3>
+                <p className="text-gray-500 mt-2">Try adjusting your search or filter criteria</p>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                {displayedCampaigns.map((campaign) => {
+                {paginatedCampaigns.map((campaign) => {
                     const raisedAmount = parseFloat(campaign.current_amount || 0);
                     const goalAmount = parseFloat(campaign.goal_amount || campaign.goal || 1);
                     const progressPercentage = Math.min((raisedAmount / goalAmount) * 100, 100);
@@ -73,7 +99,7 @@ const CampaignList = ({ isHomePage = false, filterCategory = "all", searchQuery 
                                     </div>
                                     <div className="flex justify-between mt-2 text-sm font-medium">
                                         <span className="text-gray-800">
-                                            ${raisedAmount.toLocaleString(undefined, {
+                                            Rs {raisedAmount.toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2
                                             })} raised
@@ -83,7 +109,7 @@ const CampaignList = ({ isHomePage = false, filterCategory = "all", searchQuery 
                                         </span>
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Goal: ${goalAmount.toLocaleString(undefined, {
+                                        Goal: Rs: {goalAmount.toLocaleString(undefined, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2
                                         })}
@@ -96,7 +122,7 @@ const CampaignList = ({ isHomePage = false, filterCategory = "all", searchQuery 
             </div>
 
             {/* Show More Button (only on homepage) */}
-            {isHomePage && displayedCampaigns.length < approvedCampaigns.length && (
+            {isHomePage && approvedCampaigns.length > 6 && (
                 <div className="flex justify-center mt-10">
                     <Link
                         to="/all-campaigns"

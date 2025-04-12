@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 
-const LogIn = ({ onLoginSuccess }) => {
+const LogIn = ({ onLoginSuccess, onForgotPassword }) => {
     const { loginUser } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -34,7 +34,7 @@ const LogIn = ({ onLoginSuccess }) => {
         const loginSuccess = await loginUser(email, password);
 
         if (loginSuccess) {
-            onLoginSuccess(); // Call the function to close the modal or perform other actions
+            onLoginSuccess();
         } else {
             setError("Login failed. Please check your credentials.");
         }
@@ -80,6 +80,14 @@ const LogIn = ({ onLoginSuccess }) => {
                     Log In
                 </button>
             </form>
+            <div className="mt-4 text-center">
+                <button
+                    onClick={onForgotPassword}
+                    className="text-[#1C9FDD] hover:underline text-sm"
+                >
+                    Forgot Password?
+                </button>
+            </div>
         </div>
     );
 };

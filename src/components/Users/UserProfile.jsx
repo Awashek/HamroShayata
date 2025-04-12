@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import useAxios from "../../utils/useAxios";
 import { jwtDecode } from "jwt-decode";
@@ -6,9 +7,14 @@ import SubscriptionStatus from "../Subscription/SubscriptionStatus";
 const UserProfile = () => {
     const [res, setRes] = useState("");
     const [userData, setUserData] = useState(null);
-    const [rewardPoints, setRewardPoints] = useState(0); // Initialize reward points
-    const [userCampaigns, setUserCampaigns] = useState([]); // State for user campaigns
-    const api = useAxios();
+    const [rewardPoints, setRewardPoints] = useState(0);
+    const [userDonations, setUserDonations] = useState([]);
+    const [userCampaigns, setUserCampaigns] = useState([]);
+    const [loading, setLoading] = useState({
+        donations: false,
+        campaigns: false
+    });
+    const axiosInstance = useAxios();
     const token = localStorage.getItem("authTokens");
 
     let user_id, full_name, username, image, bio, email;
@@ -21,22 +27,29 @@ const UserProfile = () => {
         image = decode.image;
         bio = decode.bio;
         email = decode.email;
-
-        // Debugging: Log decoded token
-        console.log("Decoded Token:", decode);
     }
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 // Fetch user profile
-                const profileResponse = await api.get("/profile/");
+                const profileResponse = await axiosInstance.get("/profile/");
                 setUserData(profileResponse.data);
-                setRewardPoints(profileResponse.data.reward_points); // Update reward points dynamically
+                setRewardPoints(profileResponse.data.reward_points);
 
-                // Fetch campaigns created by the user
-                const campaignsResponse = await api.get("/campaigns/");
-                console.log("Fetched campaigns:", campaignsResponse.data); // Debugging
+                // Fetch user donations
+                setLoading(prev => ({ ...prev, donations: true }));
+                const donationsResponse = await axiosInstance.get("/donations/");
+                // Process donations - sort by recent and take top 3
+                const recentDonations = donationsResponse.data
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 3);
+                setUserDonations(recentDonations);
+                setLoading(prev => ({ ...prev, donations: false }));
+
+                // Fetch user campaigns
+                setLoading(prev => ({ ...prev, campaigns: true }));
+                const campaignsResponse = await axiosInstance.get("/campaigns/");
 
                 // Filter campaigns by user_id and sort by latest
                 const filteredCampaigns = campaignsResponse.data
@@ -44,19 +57,35 @@ const UserProfile = () => {
                     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort by latest
                     .slice(0, 3); // Get top 3 campaigns
 
-                console.log("Filtered campaigns:", filteredCampaigns); // Debugging
                 setUserCampaigns(filteredCampaigns);
+                setLoading(prev => ({ ...prev, campaigns: false }));
             } catch (error) {
-                console.error("Error fetching data:", error);
                 setRes("Error fetching data");
+                // Reset loading states in case of error
+                setLoading(prev => ({
+                    ...prev,
+                    donations: false,
+                    campaigns: false
+                }));
             }
         };
         fetchData();
-    }, [username]); // Add username as a dependency
+    }, [username]);
 
-    // Function to get the first letter of the username
     const getInitial = (name) => {
         return name ? name.charAt(0).toUpperCase() : "";
+    };
+
+    const formatCurrency = (amount) => {
+        return `Rs. ${new Intl.NumberFormat('en-IN').format(amount)}`;
+    };
+
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
     };
 
     return (
@@ -84,30 +113,41 @@ const UserProfile = () => {
             <div className="mb-8">
                 <h3 className="text-xl font-semibold text-[#1C9FDD] mb-4">Personal Details</h3>
                 <p className="text-gray-700 text-lg">
-                    <span className="font-medium">Location:</span> New York, USA
+                    <span className="font-medium">Bio:</span> {bio || "No bio yet"}
                 </p>
                 <p className="text-gray-700 text-lg">
-                    <span className="font-medium">Member Since:</span> January 2022
+                    <span className="font-medium">Member Since:</span> {userData?.date_joined ? formatDate(userData.date_joined) : "N/A"}
                 </p>
             </div>
 
             {/* Donation History */}
             <div className="mb-8">
-                <h3 className="text-xl font-semibold text-[#1C9FDD] mb-4">Donation History</h3>
-                <ul className="text-gray-700 space-y-3">
-                    <li className="flex justify-between">
-                        <span className="font-medium">Save the Whales:</span>
-                        <span className="text-green-500">$100</span>
-                    </li>
-                    <li className="flex justify-between">
-                        <span className="font-medium">Medical Aid for John:</span>
-                        <span className="text-green-500">$50</span>
-                    </li>
-                    <li className="flex justify-between">
-                        <span className="font-medium">Charity for Homeless:</span>
-                        <span className="text-green-500">$75</span>
-                    </li>
-                </ul>
+                <h3 className="text-xl font-semibold text-[#1C9FDD] mb-4">Recent Donations</h3>
+                {loading.donations ? (
+                    <p>Loading donations...</p>
+                ) : userDonations.length > 0 ? (
+                    <ul className="text-gray-700 space-y-3">
+                        {userDonations.map((donation) => {
+                            const campaignName = donation.campaign?.campaign_title ||
+                                donation.campaign?.title ||
+                                donation.campaign_name ||
+                                'Unknown Campaign';
+
+                            return (
+                                <li key={donation.id} className="flex justify-between">
+                                    <span className="font-medium">
+                                        {campaignName}
+                                    </span>
+                                    <span className="text-green-500">
+                                        {formatCurrency(donation.amount)}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                ) : (
+                    <p className="text-gray-500">No donations yet.</p>
+                )}
             </div>
 
             {/* Rewards Points */}
@@ -116,12 +156,13 @@ const UserProfile = () => {
                 <div className="relative h-3 w-full bg-gray-200 rounded-full overflow-hidden">
                     <div
                         className="absolute top-0 left-0 h-full bg-[#1C9FDD] rounded-full"
-                        style={{ width: `${(rewardPoints / 5000) * 100}%` }}  // Adjust dynamically
+                        style={{ width: `${(rewardPoints / 5000) * 100}%` }}
                     ></div>
                 </div>
                 <p className="mt-3 text-sm text-gray-700 font-semibold">{rewardPoints} Points</p>
             </div>
 
+            {/* Campaigns Created */}
             {/* Campaigns Created */}
             <div>
                 <h3 className="text-xl font-semibold text-[#1C9FDD] mb-4">Campaigns Created</h3>
