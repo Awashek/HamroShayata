@@ -3,10 +3,9 @@ import { AuthContext } from "../../context/AuthContext";
 import useAxios from "../../utils/useAxios";
 
 const DashboardOverview = ({ campaigns = [] }) => {
-    const { userCount } = useContext(AuthContext);
-
+    const { userCount, authLoading } = useContext(AuthContext);
     const axiosInstance = useAxios();
-    
+
     const [stats, setStats] = useState({
         totalAmount: 0,
         totalDonations: 0,
@@ -18,16 +17,16 @@ const DashboardOverview = ({ campaigns = [] }) => {
             try {
                 // Fetch donation data
                 const response = await axiosInstance.get('donations/');
-                
+
                 if (response.data) {
                     const donations = response.data.map(donation => ({
                         id: donation.id,
                         amount: parseFloat(donation.amount)
                     }));
-                    
+
                     // Calculate total amount
                     const totalAmount = donations.reduce((acc, donation) => acc + donation.amount, 0);
-                    
+
                     setStats({
                         totalAmount,
                         totalDonations: donations.length,
@@ -36,15 +35,16 @@ const DashboardOverview = ({ campaigns = [] }) => {
                 }
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
-                } finally {
-                    setStats(prev => ({ ...prev, loading: false }));
-                }
-            };
-    
-            fetchDashboardData();
-        }, []);
+            } finally {
+                setStats(prev => ({ ...prev, loading: false }));
+            }
+        };
 
-    if (stats.loading) {
+        fetchDashboardData();
+    }, []);
+
+    // Show loading indicator when either dashboard stats or user count is loading
+    if (stats.loading || authLoading) {
         return (
             <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-blue-600"></div>
@@ -69,7 +69,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="bg-white rounded-lg shadow p-6 transition duration-300 ease-in-out hover:shadow-lg">
                     <div className="flex items-center">
                         <div className="p-3 rounded-full bg-green-100 text-green-500">
@@ -83,7 +83,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="bg-white rounded-lg shadow p-6 transition duration-300 ease-in-out hover:shadow-lg">
                     <div className="flex items-center">
                         <div className="p-3 rounded-full bg-blue-100 text-blue-500">
@@ -97,22 +97,22 @@ const DashboardOverview = ({ campaigns = [] }) => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="bg-white rounded-lg shadow p-6 transition duration-300 ease-in-out hover:shadow-lg">
                     <div className="flex items-center">
                         <div className="p-3 rounded-full bg-yellow-100 text-yellow-500">
                             <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
                             </svg>
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium text-gray-500">Total Amount</p>
-                            <p className="text-3xl font-bold text-gray-900">RS {stats.totalAmount.toFixed()}</p>
+                            <p className="text-3xl font-bold text-gray-900"> NRs {stats.totalAmount.toFixed()}</p>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             {/* Campaign Status */}
             {campaigns.length > 0 && (
                 <div className="bg-white rounded-lg shadow p-6">
@@ -126,12 +126,12 @@ const DashboardOverview = ({ campaigns = [] }) => {
                                 </span>
                             </div>
                             <div className="overflow-hidden h-2 text-xs flex rounded bg-yellow-200">
-                                <div style={{ 
-                                    width: `${(campaigns.filter(c => c.status === "pending").length / campaigns.length) * 100}%` 
+                                <div style={{
+                                    width: `${(campaigns.filter(c => c.status === "pending").length / campaigns.length) * 100}%`
                                 }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500"></div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-sm font-medium text-gray-700">Approved</h3>
@@ -140,12 +140,12 @@ const DashboardOverview = ({ campaigns = [] }) => {
                                 </span>
                             </div>
                             <div className="overflow-hidden h-2 text-xs flex rounded bg-green-200">
-                                <div style={{ 
-                                    width: `${(campaigns.filter(c => c.status === "approved").length / campaigns.length) * 100}%` 
+                                <div style={{
+                                    width: `${(campaigns.filter(c => c.status === "approved").length / campaigns.length) * 100}%`
                                 }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
                             </div>
                         </div>
-                        
+
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-sm font-medium text-gray-700">Rejected</h3>
@@ -154,15 +154,15 @@ const DashboardOverview = ({ campaigns = [] }) => {
                                 </span>
                             </div>
                             <div className="overflow-hidden h-2 text-xs flex rounded bg-red-200">
-                                <div style={{ 
-                                    width: `${(campaigns.filter(c => c.status === "rejected").length / campaigns.length) * 100}%` 
+                                <div style={{
+                                    width: `${(campaigns.filter(c => c.status === "rejected").length / campaigns.length) * 100}%`
                                 }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-            
+
             {/* Donation Statistics */}
             <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Donation Statistics</h2>
@@ -175,12 +175,12 @@ const DashboardOverview = ({ campaigns = [] }) => {
                             </span>
                         </div>
                         <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
-                            <div style={{ width: '100%' }} 
+                            <div style={{ width: '100%' }}
                                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-medium text-gray-700">Donation Goal Progress</h3>
@@ -189,12 +189,12 @@ const DashboardOverview = ({ campaigns = [] }) => {
                             </span>
                         </div>
                         <div className="overflow-hidden h-2 text-xs flex rounded bg-purple-200">
-                            <div style={{ 
-                                width: `${Math.min(100, (stats.totalAmount / 1000000) * 100)}%` 
+                            <div style={{
+                                width: `${Math.min(100, (stats.totalAmount / 1000000) * 100)}%`
                             }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500"></div>
                         </div>
                     </div>
-                    
+
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-medium text-gray-700">Total Number of Donations</h3>
@@ -203,8 +203,8 @@ const DashboardOverview = ({ campaigns = [] }) => {
                             </span>
                         </div>
                         <div className="overflow-hidden h-2 text-xs flex rounded bg-green-200">
-                            <div style={{ 
-                                width: '100%' 
+                            <div style={{
+                                width: '100%'
                             }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
                         </div>
                     </div>

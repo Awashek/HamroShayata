@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
+
 const SubscriptionContext = createContext();
 
 export const useSubscriptions = () => useContext(SubscriptionContext);

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import useAxios from "../utils/useAxios";
+import { useCampaigns } from "./CampaignContext";
 
 const DonationContext = createContext();
 
@@ -18,27 +19,13 @@ export const DonationProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState(null);
-    const [campaigns, setCampaigns] = useState([]);
     const { authTokens } = useContext(AuthContext);
+    const { updateCampaignAmount } = useCampaigns();
     const navigate = useNavigate();
     const axiosInstance = useAxios();
 
-
-    const updateCampaignAmount = useCallback((campaignId, amount) => {
-        setCampaigns(prevCampaigns =>
-            prevCampaigns.map(campaign =>
-                campaign.id === campaignId
-                    ? {
-                        ...campaign,
-                        current_amount: (parseFloat(campaign.current_amount || 0) + parseFloat(amount)).toFixed(2)
-                    }
-                    : campaign
-            )
-        );
-    }, []);
-
     const fetchDonations = useCallback(async () => {
-        if (loading) return; // Skip if already loading
+        if (loading) return;
 
         try {
             setLoading(true);
@@ -51,28 +38,32 @@ export const DonationProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [axiosInstance, loading]); // Add loading to dependencies
+    }, [axiosInstance, loading]);
 
     const initiateDonation = async (campaignId, amountInRs, message = '') => {
         try {
             setLoading(true);
             setError(null);
-    
-            // Validate Rs amount (e.g., minimum Rs 10)
+
             if (amountInRs < 10) {
                 throw new Error("Minimum donation is Rs 10");
             }
-    
+
             const response = await axiosInstance.post("donations/initiate/", {
                 campaign_id: campaignId,
-                amount: amountInRs,  // Send Rs amount (backend converts to paisa)
+                amount: amountInRs,
                 message
             });
-    
-            // Open Khalti payment window
+
+            localStorage.setItem('donation_pidx', response.data.pidx);
+            localStorage.setItem('pending_donation_id', response.data.donation_id);
+            
             window.open(response.data.payment_url, "_blank");
             
-            return response.data;
+            return {
+                ...response.data,
+                success: true
+            };
         } catch (error) {
             setError(error.response?.data?.detail || error.message);
             throw error;
@@ -82,38 +73,88 @@ export const DonationProvider = ({ children }) => {
     };
 
     const verifyDonation = async (pidx) => {
+        if (window._verifying && window._verifying[pidx]) {
+            console.log("Verification already in progress for this pidx, skipping duplicate request");
+            return { status: "in_progress", message: "Verification in progress" };
+        }
+        
+        if (!window._verifying) window._verifying = {};
+        window._verifying[pidx] = true;
+        
+        if (!window._retryCount) window._retryCount = {};
+        if (!window._retryCount[pidx]) window._retryCount[pidx] = 0;
+    
+        const MAX_RETRIES = 3;
+        
         try {
             setLoading(true);
             setError(null);
 
+            if (window._retryCount[pidx] >= MAX_RETRIES) {
+                console.error(`Max retries (${MAX_RETRIES}) reached for pidx: ${pidx}`);
+                setError(`Verification failed after ${MAX_RETRIES} attempts. Please contact support.`);
+                delete window._verifying[pidx];
+                return { status: "error", message: "Max retries reached" };
+            }
+
+            window._retryCount[pidx]++;
+            console.log(`Verifying donation (attempt ${window._retryCount[pidx]}): ${pidx}`);
+            
             const response = await axiosInstance.post(
                 "donations/verify/",
                 { pidx }
             );
 
             setPaymentStatus(response.data.status);
+            
+            if (response.data.status === "success") {
+                delete window._retryCount[pidx];
+                
+                if (response.data.campaign && response.data.amount) {
+                    // Update campaign amount in CampaignContext
+                    updateCampaignAmount(response.data.campaign, response.data.amount);
+                }
 
-            // Update the campaign amount locally
-            if (response.data.status === 'Completed' && response.data.campaign && response.data.amount) {
-                updateCampaignAmount(response.data.campaign, response.data.amount);
+                await fetchDonations();
+                localStorage.removeItem('donation_pidx');
+                localStorage.removeItem('pending_donation_id');
             }
 
-            await fetchDonations(); // Refresh donations list
-
-            if (response.data.status === 'Completed') {
-                navigate(`/campaigns/${response.data.campaign}?donation_success=true`);
-            }
-
+            delete window._verifying[pidx];
             return response.data;
 
         } catch (error) {
             console.error("Error verifying donation:", error);
-            setError(error.response?.data || error.message);
+            setError(error.response?.data?.detail || error.message);
             setPaymentStatus('verification_failed');
+            
+            delete window._verifying[pidx];
             throw error;
         } finally {
             setLoading(false);
         }
+    };
+
+    const checkPendingDonations = async () => {
+        const pendingPidx = localStorage.getItem('donation_pidx');
+        
+        if (pendingPidx) {
+            try {
+                const result = await verifyDonation(pendingPidx);
+                
+                if (result.status === 'success') {
+                    return {
+                        success: true,
+                        message: 'Your donation was completed successfully!',
+                        data: result
+                    };
+                }
+            } catch (error) {
+                console.error('Error checking pending donation:', error);
+            }
+        }
+        
+        return null;
     };
 
     const getCampaignDonations = async (campaignId) => {
@@ -135,9 +176,7 @@ export const DonationProvider = ({ children }) => {
     const getUserDonations = async () => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get(
-                "donations/"
-            );
+            const response = await axiosInstance.get("donations/");
             setDonations(response.data);
             setError(null);
             return response.data;
@@ -162,6 +201,7 @@ export const DonationProvider = ({ children }) => {
                 fetchDonations,
                 getCampaignDonations,
                 getUserDonations,
+                checkPendingDonations,
             }}
         >
             {children}

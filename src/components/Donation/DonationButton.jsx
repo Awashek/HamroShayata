@@ -1,18 +1,40 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useDonations } from '../../context/DonationContext';
 import { AuthContext } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useCampaigns } from '../../context/CampaignContext';
 const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
     const [customAmount, setCustomAmount] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState(null);
     const [showPopupHelp, setShowPopupHelp] = useState(false);
-    const { initiateDonation, loading } = useDonations();
+    const { initiateDonation, verifyDonation, loading, checkPendingDonations } = useDonations();
     const { user } = useContext(AuthContext);
+    const { updateCampaignAmount } = useCampaigns();
     const navigate = useNavigate();
+    const location = useLocation();
     
     const [successMessage, setSuccessMessage] = useState('');
+
+    // Check for pending donations when component mounts or when URL changes
+    // (in case user returns from payment)
+    useEffect(() => {
+        const checkDonation = async () => {
+            const result = await checkPendingDonations();
+            if (result && result.success) {
+                setSuccessMessage(result.message);
+                if (onDonationSuccess) {
+                    onDonationSuccess();
+                }
+                // Update the campaign amount in the context
+                if (result.data?.campaign && result.data?.amount) {
+                    updateCampaignAmount(result.data.campaign, result.data.amount);
+                }
+            }
+        };
+        
+        checkDonation();
+    }, [location, checkPendingDonations, onDonationSuccess, updateCampaignAmount]);
 
     const handleDonate = async (e) => {
         e.preventDefault();
@@ -21,13 +43,13 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
             navigate('/login?redirect=donate');
             return;
         }
-
+    
         const amount = parseFloat(customAmount);
         if (!amount || isNaN(amount) || amount < 1) {
             setError('Please enter a valid amount (minimum Rs. 1)');
             return;
         }
-
+    
         try {
             setError(null);
             setSuccessMessage('');
@@ -37,9 +59,6 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
                 setShowPopupHelp(true);
             } else if (response?.success) {
                 setSuccessMessage('Payment initiated successfully! Check your email for confirmation.');
-                if (onDonationSuccess) {
-                    onDonationSuccess();
-                }
             }
         } catch (err) {
             setError(err.message || 'Payment failed. Please try again later.');
@@ -47,13 +66,28 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
         }
     };
 
-
     const handleManualRedirect = () => {
-        window.location.href = error.payment_url;
+        const paymentUrl = localStorage.getItem('payment_url');
+        if (paymentUrl) {
+            window.open(paymentUrl, '_blank');
+        } else if (error && error.payment_url) {
+            window.open(error.payment_url, '_blank');
+        }
     };
 
     return (
+        
         <div className={`donation-widget ${className}`}>
+            {successMessage && (
+                <div className="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded">
+                    <p>{successMessage}</p>
+                    {rewardPointsEarned > 0 && (
+                        <p className="mt-2 font-medium">
+                            🎉 You earned {rewardPointsEarned} reward points for this donation!
+                        </p>
+                    )}
+                </div>
+            )}
             <form onSubmit={handleDonate}>
                 <div className="mb-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -71,6 +105,19 @@ const DonationButton = ({ campaignId, className = "", onDonationSuccess }) => {
                             setError(null);
                         }}
                         required
+                    />
+                </div>
+                
+                <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Message (Optional)
+                    </label>
+                    <textarea
+                        className="w-full p-2 border rounded"
+                        placeholder="Add a message with your donation"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows="2"
                     />
                 </div>
                 

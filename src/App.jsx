@@ -20,7 +20,7 @@ import { DonationProvider } from './context/DonationContext';
 import AllCampaignDonors from './components/campaigntest/AllCampaignDoners';
 import CampaignDonors from './components/campaigntest/CampaginDonors';
 import ResetPasswordPage from './components/LogIn/ResetPasswordPage';
-
+import PaymentCallback from './components/Donation/PaymentCallback';
 function App() {
   return (
     <Router>
@@ -40,13 +40,14 @@ function App() {
                         <Category />
                         <CampaignList isHomePage={true} />
                         <SubscriptionPlans />
-                       
                       </>
                     } />
-                  
+
                     <Route path="/campaigns/:id" element={<CampaignDetailTest />} />
                     <Route path="/all-campaigns" element={<AllCampaigns />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/payment/callback" element={<PaymentCallback />} />
+
                     {/* Updated donor routes */}
                     <Route path="/campaigns/:id/donors" element={<AllCampaignDonors />} />
                     <Route path="/campaigns/:id/donors/top" element={<CampaignDonors />} />

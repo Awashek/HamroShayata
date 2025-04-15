@@ -135,6 +135,21 @@ export const CampaignProvider = ({ children }) => {
         return campaigns.find(campaign => campaign.id === id);
     };
 
+    const updateCampaignAmount = useCallback((campaignId, amount) => {
+        setCampaigns(prevCampaigns =>
+            prevCampaigns.map(campaign =>
+                campaign.id === campaignId
+                    ? {
+                        ...campaign,
+                        current_amount: (parseFloat(campaign.current_amount || 0) + parseFloat(amount)).toFixed(2),
+                        // Recalculate days_left if needed
+                        days_left: calculateDaysLeft(campaign.deadline)
+                    }
+                    : campaign
+            )
+        );
+    }, []);
+
     return (
         <CampaignContext.Provider
             value={{
@@ -145,7 +160,8 @@ export const CampaignProvider = ({ children }) => {
                 createCampaign,
                 updateCampaign,
                 deleteCampaign,
-                getCampaignById
+                getCampaignById,
+                updateCampaignAmount,
             }}
         >
             {children}

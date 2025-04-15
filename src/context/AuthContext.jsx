@@ -15,8 +15,10 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Effect for handling auth tokens and user data
   useEffect(() => {
     if (authTokens) {
       const decodedUser = jwtDecode(authTokens.access);
@@ -27,6 +29,9 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(decodedUser);
 
+        // Fetch users after authentication is confirmed
+        fetchUsers();
+
         // Redirect to dashboard if the user is an admin
         if (decodedUser.is_admin) {
           navigate("/dashboard");
@@ -35,6 +40,34 @@ export const AuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, [authTokens, navigate]);
+
+  // Function to fetch users
+  const fetchUsers = async () => {
+    // Only fetch if we have tokens
+    if (!authTokens) {
+      setAuthLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/users/", {
+        headers: {
+          Authorization: `Bearer ${authTokens.access}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+
+      const data = await response.json();
+      setUserCount(data.length);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   const loginUser = async (email, password) => {
     try {
@@ -53,6 +86,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("authTokens", JSON.stringify(data));
         setAuthTokens(data);
         setUser(userData);
+
+        // User count will be fetched in the authTokens useEffect
 
         // Redirect to dashboard if the user is an admin
         if (userData.is_admin) {
@@ -154,9 +189,12 @@ export const AuthProvider = ({ children }) => {
   const logoutUser = () => {
     setAuthTokens(null);
     setUser(null);
+    setUserCount(0);
     localStorage.removeItem("authTokens");
     navigate("/");
   };
+
+  const getAccessToken = () => authTokens?.access;
 
   const contextData = {
     authTokens,
@@ -170,7 +208,8 @@ export const AuthProvider = ({ children }) => {
     setUserCount,
     forgotPassword,
     resetPassword,
-    getAccessToken: () => authTokens?.access
+    getAccessToken,
+    authLoading
   };
 
   return (

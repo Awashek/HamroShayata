@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 
 const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
     const [selectedCitizenship, setSelectedCitizenship] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalType, setModalType] = useState("citizenship"); // "citizenship" or "campaign"
     const [filteredCampaigns, setFilteredCampaigns] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [campaignsPerPage] = useState(10);
@@ -15,13 +17,21 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
     const [endDateFilter, setEndDateFilter] = useState("");
     const [deadlineFilter, setDeadlineFilter] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [sortOrder, setSortOrder] = useState("newest"); // Default sort by newest
 
     // Get unique users for filter dropdown
     const uniqueUsers = [...new Set(allCampaigns.map(campaign => campaign.user))];
 
-    // Apply filters whenever filter states change
+    // Sort and filter campaigns
     useEffect(() => {
         let result = [...allCampaigns];
+
+        // Sort campaigns
+        if (sortOrder === "newest") {
+            result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        } else if (sortOrder === "oldest") {
+            result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        }
 
         // Apply search query filter
         if (searchQuery.trim() !== "") {
@@ -40,7 +50,7 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
             result = result.filter(campaign => campaign.user === userFilter);
         }
 
-        // Apply date range filter (assuming there's a created_at field)
+        // Apply date range filter
         if (startDateFilter) {
             result = result.filter(campaign =>
                 new Date(campaign.created_at || campaign.deadline) >= new Date(startDateFilter)
@@ -68,7 +78,7 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
 
         setFilteredCampaigns(result);
         setCurrentPage(1); // Reset to first page when filters change
-    }, [allCampaigns, statusFilter, userFilter, startDateFilter, endDateFilter, deadlineFilter, searchQuery]);
+    }, [allCampaigns, statusFilter, userFilter, startDateFilter, endDateFilter, deadlineFilter, searchQuery, sortOrder]);
 
     // Pagination logic
     const indexOfLastCampaign = currentPage * campaignsPerPage;
@@ -77,6 +87,18 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
     const totalPages = Math.ceil(filteredCampaigns.length / campaignsPerPage);
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Format dates in DD-MM-YYYY
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+    };
+
+    // Format date and time for created_at
+    const formatDateTime = (dateString) => {
+        const date = new Date(dateString);
+        return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    };
 
     const handleApprove = async (id) => {
         try {
@@ -144,14 +166,22 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
         }
     };
 
-    const handleViewCitizenship = (citizenshipId) => {
-        setSelectedCitizenship(citizenshipId);
+    const handleViewImage = (type, imageUrl) => {
+        if (type === "citizenship") {
+            setSelectedCitizenship(imageUrl);
+            setSelectedImage(null);
+        } else {
+            setSelectedImage(imageUrl);
+            setSelectedCitizenship(null);
+        }
+        setModalType(type);
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedCitizenship(null);
+        setSelectedImage(null);
     };
 
     const resetFilters = () => {
@@ -161,6 +191,7 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
         setEndDateFilter("");
         setDeadlineFilter("");
         setSearchQuery("");
+        setSortOrder("newest");
     };
 
     if (loading) {
@@ -174,22 +205,30 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
 
     return (
         <div className="space-y-6">
-            {/* Modal for viewing citizenship ID */}
+            {/* Modal for viewing images */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+                    <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full">
                         <div className="p-4 border-b border-gray-200">
-                            <h3 className="text-lg font-medium text-gray-900">Citizenship ID Verification</h3>
+                            <h3 className="text-lg font-medium text-gray-900">
+                                {modalType === "citizenship" ? "Citizenship ID Verification" : "Campaign Image"}
+                            </h3>
                         </div>
                         <div className="p-4">
-                            {selectedCitizenship ? (
+                            {modalType === "citizenship" && selectedCitizenship ? (
                                 <img
                                     src={selectedCitizenship}
                                     alt="Citizenship ID"
                                     className="w-full h-auto rounded border border-gray-200"
                                 />
+                            ) : modalType === "campaign" && selectedImage ? (
+                                <img
+                                    src={selectedImage}
+                                    alt="Campaign Image"
+                                    className="w-full h-auto rounded border border-gray-200"
+                                />
                             ) : (
-                                <p className="text-gray-500">No citizenship ID available</p>
+                                <p className="text-gray-500">No image available</p>
                             )}
                         </div>
                         <div className="p-4 border-t border-gray-200 flex justify-end">
@@ -223,7 +262,7 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                 </div>
             </div>
 
-            {/* Search bar */}
+            {/* Search bar and sort options */}
             <div className="bg-white shadow rounded-lg p-4 mb-6">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1">
@@ -242,6 +281,17 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                 </svg>
                             </div>
                         </div>
+                    </div>
+                    <div className="md:w-64">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value)}
+                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md"
+                        >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -337,10 +387,19 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                     User
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Campaign Image
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Citizenship ID
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Goal Amount
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Deadline
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Created At
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
@@ -360,10 +419,37 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                         {campaign.user}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${campaign.goal_amount}
+                                        {campaign.images ? (
+                                            <button
+                                                onClick={() => handleViewImage("campaign", campaign.images)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+                                            >
+                                                View Image
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400">No image</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {new Date(campaign.deadline).toLocaleDateString()}
+                                        {campaign.citizenship_id ? (
+                                            <button
+                                                onClick={() => handleViewImage("citizenship", campaign.citizenship_id)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+                                            >
+                                                View ID
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400">No ID</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        Rs {campaign.goal_amount}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatDate(campaign.deadline)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatDateTime(campaign.created_at)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -375,33 +461,42 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2 items-center">
-                                            {campaign.status === "pending" && (
+                                            {campaign.status === "pending" ? (
                                                 <>
                                                     <button
                                                         onClick={() => handleApprove(campaign.id)}
                                                         disabled={processing[campaign.id] === 'approving'}
-                                                        className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition duration-200"
+                                                        className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white hover:bg-green-600 transition duration-200"
+                                                        title="Approve"
                                                     >
-                                                        {processing[campaign.id] === 'approving' ? 'Approving...' : 'Approve'}
+                                                        {processing[campaign.id] === 'approving' ? 
+                                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg> : 
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        }
                                                     </button>
                                                     <button
                                                         onClick={() => handleReject(campaign.id)}
                                                         disabled={processing[campaign.id] === 'rejecting'}
-                                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition duration-200"
+                                                        className="flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white hover:bg-red-600 transition duration-200"
+                                                        title="Reject"
                                                     >
-                                                        {processing[campaign.id] === 'rejecting' ? 'Rejecting...' : 'Reject'}
+                                                        {processing[campaign.id] === 'rejecting' ? 
+                                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg> : 
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                            </svg>
+                                                        }
                                                     </button>
                                                 </>
-                                            )}
-                                            {campaign.citizenship_id && (
-                                                <button
-                                                    onClick={() => handleViewCitizenship(campaign.citizenship_id)}
-                                                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
-                                                >
-                                                    View ID
-                                                </button>
-                                            )}
-                                            {campaign.status !== "pending" && (
+                                            ) : (
                                                 <span className="text-gray-400">No actions available</span>
                                             )}
                                         </div>
@@ -410,7 +505,7 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                             ))}
                             {currentCampaigns.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan="9" className="px-6 py-4 text-center text-sm text-gray-500">
                                         No campaigns found
                                     </td>
                                 </tr>
