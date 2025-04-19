@@ -9,7 +9,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
-    const { user, logoutUser } = useContext(AuthContext);
+    const { user, logoutUser, showSlider , setShowSlider } = useContext(AuthContext);
     const token = localStorage.getItem('authTokens');
     const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ const Navbar = () => {
         }
     }
 
-    const [showSlider, setShowSlider] = useState(false);
+    // const [showSlider, setShowSlider] = useState(false);
     const [activeTab, setActiveTab] = useState("login");
     const [leftButtonText, setLeftButtonText] = useState("Sign Up");
     const [leftSideText, setLeftSideText] = useState("Let's create an account");

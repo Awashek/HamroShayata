@@ -73,67 +73,72 @@ export const DonationProvider = ({ children }) => {
     };
 
     const verifyDonation = async (pidx) => {
-        if (window._verifying && window._verifying[pidx]) {
+        if (!window._verifying) window._verifying = {};
+        if (!window._retryCount) window._retryCount = {};
+    
+        // Prevent duplicate verifications
+        if (window._verifying[pidx]) {
             console.log("Verification already in progress for this pidx, skipping duplicate request");
             return { status: "in_progress", message: "Verification in progress" };
         }
-        
-        if (!window._verifying) window._verifying = {};
+    
         window._verifying[pidx] = true;
-        
-        if (!window._retryCount) window._retryCount = {};
-        if (!window._retryCount[pidx]) window._retryCount[pidx] = 0;
+        window._retryCount[pidx] = window._retryCount[pidx] || 0;
     
         const MAX_RETRIES = 3;
-        
+    
         try {
             setLoading(true);
             setError(null);
-
+    
             if (window._retryCount[pidx] >= MAX_RETRIES) {
                 console.error(`Max retries (${MAX_RETRIES}) reached for pidx: ${pidx}`);
                 setError(`Verification failed after ${MAX_RETRIES} attempts. Please contact support.`);
-                delete window._verifying[pidx];
                 return { status: "error", message: "Max retries reached" };
             }
-
+    
             window._retryCount[pidx]++;
             console.log(`Verifying donation (attempt ${window._retryCount[pidx]}): ${pidx}`);
-            
-            const response = await axiosInstance.post(
-                "donations/verify/",
-                { pidx }
-            );
-
+    
+            const response = await axiosInstance.post("donations/verify/", { pidx });
+    
             setPaymentStatus(response.data.status);
-            
+    
             if (response.data.status === "success") {
                 delete window._retryCount[pidx];
-                
+    
                 if (response.data.campaign && response.data.amount) {
-                    // Update campaign amount in CampaignContext
                     updateCampaignAmount(response.data.campaign, response.data.amount);
                 }
-
+    
                 await fetchDonations();
                 localStorage.removeItem('donation_pidx');
                 localStorage.removeItem('pending_donation_id');
+    
+                return {
+                    ...response.data,
+                    isCompleted: true
+                };
             }
-
-            delete window._verifying[pidx];
-            return response.data;
-
+    
+            return {
+                ...response.data,
+                isCompleted: false
+            };
+    
         } catch (error) {
             console.error("Error verifying donation:", error);
             setError(error.response?.data?.detail || error.message);
             setPaymentStatus('verification_failed');
-            
-            delete window._verifying[pidx];
+    
             throw error;
+    
         } finally {
             setLoading(false);
+            delete window._verifying[pidx];
         }
     };
+    
 
     const checkPendingDonations = async () => {
         const pendingPidx = localStorage.getItem('donation_pidx');
@@ -146,7 +151,8 @@ export const DonationProvider = ({ children }) => {
                     return {
                         success: true,
                         message: 'Your donation was completed successfully!',
-                        data: result
+                        data: result,
+                        isCompleted: true // Add this flag
                     };
                 }
             } catch (error) {
@@ -176,7 +182,8 @@ export const DonationProvider = ({ children }) => {
     const getUserDonations = async () => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get("donations/");
+            // Add status=Completed parameter to only fetch completed donations
+            const response = await axiosInstance.get("donations/by_user/?status=Completed");
             setDonations(response.data);
             setError(null);
             return response.data;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useAxios from '../../utils/useAxios';
+import useAxios from '../../../utils/useAxios';
 
 const AllCampaignDonors = () => {
     const { id: campaignId } = useParams();
@@ -20,9 +20,9 @@ const AllCampaignDonors = () => {
             const campaignResponse = await axiosInstance.get(`campaigns/${campaignId}/`);
             setCampaign(campaignResponse.data);
             
-            // Fetch donors
+            // Fetch only completed donations
             const donorsResponse = await axiosInstance.get(
-                `donations/campaign-donors/?campaign_id=${campaignId}`
+                `donations/campaign-donors/?campaign_id=${campaignId}&status=Completed`
             );
             setDonors(donorsResponse.data);
             

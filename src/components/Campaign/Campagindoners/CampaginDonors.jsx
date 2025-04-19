@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import useAxios from '../../utils/useAxios';
+import useAxios from '../../../utils/useAxios';
 
 const CampaignDonors = ({ donors, setDonors }) => {
     const { id: campaignId } = useParams();
@@ -13,9 +13,9 @@ const CampaignDonors = ({ donors, setDonors }) => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(
-                `donations/campaign-donors/?campaign_id=${campaignId}`
+                `donations/campaign-donors/?campaign_id=${campaignId}&status=Completed`
             );
-            setDonors(response.data); // This updates the state in parent
+            setDonors(response.data);
             setError(null);
         } catch (err) {
             setError(err.response?.data?.error || err.message);

@@ -2,21 +2,22 @@ import React, { useState, useContext, useCallback } from "react";
 import { useSubscriptions } from "../../context/SubscriptionContext";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Crown, Target, Award, CheckCircle2, Loader2 } from "lucide-react";
+import { Crown, Target, Award, CheckCircle2, Loader2, X } from "lucide-react";
 
 const SubscriptionPlans = () => {
   const { createSubscription } = useSubscriptions();
-  const { authTokens } = useContext(AuthContext);
+  const { authTokens, setShowSlider } = useContext(AuthContext);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const navigate = useNavigate();
 
   const subscriptionPlans = [
-    { 
-      type: "bronze", 
-      name: "Bronze", 
+    {
+      type: "bronze",
+      name: "Bronze",
       campaigns: 5,
       points: 50,
       icon: Award,
@@ -25,9 +26,9 @@ const SubscriptionPlans = () => {
       highlightColor: "bg-[#cd7f32]",
       textColor: "text-white"
     },
-    { 
-      type: "silver", 
-      name: "Silver", 
+    {
+      type: "silver",
+      name: "Silver",
       campaigns: 10,
       points: 100,
       icon: Target,
@@ -37,9 +38,9 @@ const SubscriptionPlans = () => {
       textColor: "text-gray-800",
       recommended: true
     },
-    { 
-      type: "gold", 
-      name: "Gold", 
+    {
+      type: "gold",
+      name: "Gold",
       campaigns: 15,
       points: 150,
       icon: Crown,
@@ -52,30 +53,29 @@ const SubscriptionPlans = () => {
 
   const handleSubscribe = useCallback(async () => {
     if (loading) return;
-  
+
     if (!authTokens) {
-      alert("You need to login to subscribe.");
-      navigate("/login");
+      setShowLoginModal(true);
       return;
     }
-  
+
     if (!selectedPlan) {
       setError("Please select a subscription plan.");
       return;
     }
-  
+
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setMonth(startDate.getMonth() + 1);
-  
+
     const subscriptionData = {
       subscription_type: selectedPlan,
       end_date: endDate.toISOString().split('T')[0],
     };
-  
+
     setLoading(true);
     setError("");
-  
+
     try {
       const result = await createSubscription(subscriptionData);
       if (result.status === 201) {
@@ -90,10 +90,54 @@ const SubscriptionPlans = () => {
       setLoading(false);
     }
   }, [loading, authTokens, selectedPlan, createSubscription]);
-  
+
+  const handleLoginClick = () => {
+    setShowLoginModal(false);
+    if (setShowSlider) {
+      setShowSlider(true);
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative">
+            <button 
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="mt-3 text-lg font-medium text-gray-900">Login Required</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>You need to login to subscribe to a plan.</p>
+                <p className="mt-2">Please login or sign up to continue.</p>
+              </div>
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={handleLoginClick}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Go to Login
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
@@ -104,7 +148,7 @@ const SubscriptionPlans = () => {
           </p>
         </div>
 
-        {error && (
+        {error && !showLoginModal && (
           <div className="max-w-3xl mx-auto mb-8">
             <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
               <div className="flex items-center">
@@ -125,12 +169,11 @@ const SubscriptionPlans = () => {
           {subscriptionPlans.map((plan) => {
             const Icon = plan.icon;
             return (
-              <div 
+              <div
                 key={plan.type}
                 onClick={() => setSelectedPlan(plan.type)}
-                className={`relative bg-white rounded-2xl shadow-xl transition-all duration-300 transform hover:scale-105 ${
-                  selectedPlan === plan.type ? 'ring-4 ring-[#1C9FDD]' : ''
-                } ${plan.recommended ? 'scale-105 md:-mt-4' : ''}`}
+                className={`relative bg-white rounded-2xl shadow-xl transition-all duration-300 transform hover:scale-105 ${selectedPlan === plan.type ? 'ring-4 ring-[#1C9FDD]' : ''
+                  } ${plan.recommended ? 'scale-105 md:-mt-4' : ''}`}
               >
                 {plan.recommended && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -163,11 +206,10 @@ const SubscriptionPlans = () => {
 
                   <button
                     onClick={() => setSelectedPlan(plan.type)}
-                    className={`w-full py-3 px-6 rounded-xl font-semibold transition-colors ${
-                      selectedPlan === plan.type
+                    className={`w-full py-3 px-6 rounded-xl font-semibold transition-colors ${selectedPlan === plan.type
                         ? 'bg-[#1C9FDD] text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     {selectedPlan === plan.type ? 'Selected' : 'Select Plan'}
                   </button>
@@ -181,13 +223,12 @@ const SubscriptionPlans = () => {
           <button
             onClick={handleSubscribe}
             disabled={loading || !selectedPlan}
-            className={`w-full py-4 px-8 rounded-xl text-white text-lg font-semibold transition-all ${
-              !selectedPlan 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : loading 
+            className={`w-full py-4 px-8 rounded-xl text-white text-lg font-semibold transition-all ${!selectedPlan
+                ? 'bg-gray-400 cursor-not-allowed'
+                : loading
                   ? 'bg-[#1C9FDD]/80'
                   : 'bg-gradient-to-r from-[#1C9FDD] to-[#1C9FDD]/90 hover:from-[#1C9FDD]/90 hover:to-[#1C9FDD] hover:shadow-lg'
-            }`}
+              }`}
           >
             {loading ? (
               <span className="flex items-center justify-center">
@@ -198,7 +239,6 @@ const SubscriptionPlans = () => {
               "Subscribe Now"
             )}
           </button>
-
         </div>
       </div>
     </div>

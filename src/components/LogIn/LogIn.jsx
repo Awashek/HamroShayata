@@ -1,45 +1,36 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-
 const LogIn = ({ onLoginSuccess, onForgotPassword }) => {
     const { loginUser } = useContext(AuthContext);
     const navigate = useNavigate();
-
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     });
     const [error, setError] = useState("");
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         const { email, password } = formData;
-
         if (email.length === 0) {
             setError("Email is required");
             return;
         }
-
         if (password.length === 0) {
             setError("Password is required");
             return;
         }
-
         const loginSuccess = await loginUser(email, password);
-
         if (loginSuccess) {
             onLoginSuccess();
         } else {
             setError("Login failed. Please check your credentials.");
         }
     };
-
     return (
         <div className="w-full">
             <h2 className="text-2xl font-semibold text-[#1C9FDD] text-center mb-4">Welcome Back</h2>
@@ -70,9 +61,7 @@ const LogIn = ({ onLoginSuccess, onForgotPassword }) => {
                         className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-
                 {error && <div className="text-red-500">{error}</div>}
-
                 <button
                     type="submit"
                     className="w-full bg-[#1C9FDD] text-white py-2 rounded-md"
@@ -91,5 +80,4 @@ const LogIn = ({ onLoginSuccess, onForgotPassword }) => {
         </div>
     );
 };
-
 export default LogIn;

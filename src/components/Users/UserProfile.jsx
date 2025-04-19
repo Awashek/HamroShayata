@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import useAxios from "../../utils/useAxios";
 import { jwtDecode } from "jwt-decode";
 import SubscriptionStatus from "../Subscription/SubscriptionStatus";
+import { useDonations } from "../../context/DonationContext";
 
 const UserProfile = () => {
+    const { getUserDonations } = useDonations();
     const [res, setRes] = useState("");
     const [userData, setUserData] = useState(null);
     const [rewardPoints, setRewardPoints] = useState(0);
@@ -14,11 +15,11 @@ const UserProfile = () => {
         donations: false,
         campaigns: false
     });
+
     const axiosInstance = useAxios();
     const token = localStorage.getItem("authTokens");
 
     let user_id, full_name, username, image, bio, email;
-
     if (token) {
         const decode = jwtDecode(token);
         user_id = decode.user_id;
@@ -37,11 +38,12 @@ const UserProfile = () => {
                 setUserData(profileResponse.data);
                 setRewardPoints(profileResponse.data.reward_points);
 
-                // Fetch user donations
+                // Fetch user donations using the context function
                 setLoading(prev => ({ ...prev, donations: true }));
-                const donationsResponse = await axiosInstance.get("/donations/");
+                const donationsData = await getUserDonations();
+
                 // Process donations - sort by recent and take top 3
-                const recentDonations = donationsResponse.data
+                const recentDonations = donationsData
                     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                     .slice(0, 3);
                 setUserDonations(recentDonations);
@@ -56,7 +58,6 @@ const UserProfile = () => {
                     .filter((campaign) => campaign.user === username) // Filter campaigns by username
                     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) // Sort by latest
                     .slice(0, 3); // Get top 3 campaigns
-
                 setUserCampaigns(filteredCampaigns);
                 setLoading(prev => ({ ...prev, campaigns: false }));
             } catch (error) {
@@ -69,11 +70,13 @@ const UserProfile = () => {
                 }));
             }
         };
+
         fetchData();
     }, [username]);
 
     const getInitial = (name) => {
-        return name ? name.charAt(0).toUpperCase() : "";
+        // Get first character from the name (likely first name)
+        return name ? name.split(' ')[0].charAt(0).toUpperCase() : "";
     };
 
     const formatCurrency = (amount) => {
@@ -92,17 +95,10 @@ const UserProfile = () => {
         <div className="max-w-lg mx-auto bg-white shadow-xl rounded-2xl p-8">
             {/* User Info */}
             <div className="flex items-center space-x-6 mb-10">
-                {image ? (
-                    <img
-                        src={image}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-full shadow-lg"
-                    />
-                ) : (
-                    <div className="w-20 h-20 rounded-full shadow-lg flex items-center justify-center bg-[#1C9FDD] text-white text-3xl font-bold">
-                        {getInitial(username)}
-                    </div>
-                )}
+                {/* Always show the initial, regardless of whether an image exists */}
+                <div className="w-20 h-20 rounded-full shadow-lg flex items-center justify-center bg-[#1C9FDD] text-white text-3xl font-bold">
+                    {getInitial(full_name || username)}
+                </div>
                 <div>
                     <h2 className="text-3xl font-bold text-[#1C9FDD] mb-2">{username}</h2>
                     <p className="text-gray-600 text-sm">{email}</p>
@@ -132,7 +128,6 @@ const UserProfile = () => {
                                 donation.campaign?.title ||
                                 donation.campaign_name ||
                                 'Unknown Campaign';
-
                             return (
                                 <li key={donation.id} className="flex justify-between">
                                     <span className="font-medium">
@@ -163,7 +158,6 @@ const UserProfile = () => {
             </div>
 
             {/* Campaigns Created */}
-            {/* Campaigns Created */}
             <div>
                 <h3 className="text-xl font-semibold text-[#1C9FDD] mb-4">Campaigns Created</h3>
                 {userCampaigns.length > 0 ? (
@@ -181,7 +175,6 @@ const UserProfile = () => {
                     <p className="text-gray-500">No campaigns created yet.</p>
                 )}
             </div>
-
             <SubscriptionStatus />
         </div>
     );

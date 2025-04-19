@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import useAxios from "../../utils/useAxios";
+import { AuthContext } from "../../../context/AuthContext";
+import useAxios from "../../../utils/useAxios";
 
 const CampaignShare = ({ campaignId }) => {
-    const { user } = useContext(AuthContext);
+    const { user, setShowSlider} = useContext(AuthContext);
     const navigate = useNavigate();
     const axiosInstance = useAxios();
 
@@ -14,31 +14,41 @@ const CampaignShare = ({ campaignId }) => {
 
     const handleShare = async (platform) => {
         if (!user) {
-            alert("You need to login to earn reward points for sharing!");
-            navigate("/login");
+            // First show the message that user needs to login
+            setShareError("You need to login to share this campaign");
+            
+            // Then after a short delay, show the login slider or navigate to login
+            setTimeout(() => {
+                if (setShowSlider) {
+                    setShowSlider(true);
+                } else {
+                    navigate('/login');
+                }
+            }, 1500); // 1.5 second delay
+            
             return;
         }
-
+        
         setIsSharing(true);
         setShareError(null);
         setShareSuccess(null);
-
+    
         try {
             const response = await axiosInstance.post(
                 `/campaigns/${campaignId}/share/`,
                 { platform }
             );
-
+    
             if (response.data) {
                 setShareSuccess({
                     platform,
                     message: response.data.detail,
                     points: response.data.total_points
                 });
-
+    
                 // Open the actual share dialog after recording the share
                 openShareDialog(platform);
-
+    
                 // Show success message for 5 seconds
                 setTimeout(() => {
                     setShareSuccess(null);

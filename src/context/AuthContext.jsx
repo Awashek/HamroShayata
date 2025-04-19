@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify';
 import { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +17,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showSlider, setShowSlider] = useState(false);
+ 
   const navigate = useNavigate();
 
   // Effect for handling auth tokens and user data
@@ -87,9 +90,12 @@ export const AuthProvider = ({ children }) => {
         setAuthTokens(data);
         setUser(userData);
 
-        // User count will be fetched in the authTokens useEffect
+        // Show success toast
+        toast.success('Login successful!', {
+          position: "top-right",
+          autoClose: 3000,
+        });
 
-        // Redirect to dashboard if the user is an admin
         if (userData.is_admin) {
           navigate("/dashboard");
         } else {
@@ -100,7 +106,11 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.detail || "Login failed");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      // Show error toast
+      toast.error(error.message || 'Login failed. Please try again.', {
+        position: "top-right",
+        autoClose: 5000,
+      });
       return false;
     }
   };
@@ -121,16 +131,26 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.status === 201) {
+        // Show success toast
+        toast.success('Registration successful! Please log in.', {
+          position: "top-right",
+          autoClose: 5000,
+        });
         return { status: 201 };
       } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Registration failed");
       }
     } catch (error) {
-      console.error("Registration failed:", error);
+      // Show error toast
+      toast.error(error.message || 'Registration failed. Please try again.', {
+        position: "top-right",
+        autoClose: 5000,
+      });
       return { status: 500, errorData: error.message };
     }
   };
+
 
   const forgotPassword = async (email) => {
     try {
@@ -143,6 +163,16 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Password reset link sent to your email", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      } else {
+        throw new Error(data.detail || "Failed to send reset email");
+      }
+
       return {
         success: response.ok,
         message: response.ok
@@ -150,6 +180,10 @@ export const AuthProvider = ({ children }) => {
           : data.detail || "Failed to send reset email",
       };
     } catch (error) {
+      toast.error(error.message || "Network error. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+      });
       return {
         success: false,
         message: "Network error. Please try again.",
@@ -172,6 +206,16 @@ export const AuthProvider = ({ children }) => {
       });
 
       const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Password has been reset successfully", {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      } else {
+        throw new Error(data.detail || "Failed to reset password");
+      }
+
       return {
         success: response.ok,
         message: response.ok
@@ -179,6 +223,10 @@ export const AuthProvider = ({ children }) => {
           : data.detail || "Failed to reset password",
       };
     } catch (error) {
+      toast.error(error.message || "Network error. Please try again.", {
+        position: "top-right",
+        autoClose: 5000,
+      });
       return {
         success: false,
         message: "Network error. Please try again.",
@@ -191,8 +239,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setUserCount(0);
     localStorage.removeItem("authTokens");
+
+    // Show info toast
+    toast.info('You have been logged out.', {
+      position: "top-right",
+      autoClose: 3000,
+    });
+
     navigate("/");
   };
+
 
   const getAccessToken = () => authTokens?.access;
 
@@ -209,7 +265,9 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     getAccessToken,
-    authLoading
+    authLoading,
+    showSlider, 
+    setShowSlider
   };
 
   return (

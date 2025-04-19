@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import useAxios from "../../utils/useAxios";
+import { 
+  BarChart, Bar, 
+  PieChart, Pie, Cell, 
+  LineChart, Line,
+  XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer 
+} from "recharts";
 
 const DashboardOverview = ({ campaigns = [] }) => {
     const { userCount, authLoading } = useContext(AuthContext);
@@ -9,7 +16,9 @@ const DashboardOverview = ({ campaigns = [] }) => {
     const [stats, setStats] = useState({
         totalAmount: 0,
         totalDonations: 0,
-        loading: true
+        last7DaysAmount: 0,
+        trendData: [],
+        loading: true,
     });
 
     useEffect(() => {
@@ -21,15 +30,61 @@ const DashboardOverview = ({ campaigns = [] }) => {
                 if (response.data) {
                     const donations = response.data.map(donation => ({
                         id: donation.id,
-                        amount: parseFloat(donation.amount)
+                        amount: parseFloat(donation.amount),
+                        date: donation.created_at ? new Date(donation.created_at) : new Date()
                     }));
 
                     // Calculate total amount
                     const totalAmount = donations.reduce((acc, donation) => acc + donation.amount, 0);
 
+                    // Calculate last 7 days amount
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    
+                    const last7DaysAmount = donations
+                        .filter(donation => donation.date >= sevenDaysAgo)
+                        .reduce((acc, donation) => acc + donation.amount, 0);
+
+                    // Create donation history data for the line chart
+                    // Group donations by month for the chart
+                    const donationsByMonth = donations.reduce((acc, donation) => {
+                        const month = donation.date.toLocaleString('default', { month: 'short' });
+                        if (!acc[month]) {
+                            acc[month] = 0;
+                        }
+                        acc[month] += donation.amount;
+                        return acc;
+                    }, {});
+
+                    // Group campaigns by month for the trend chart
+                    const campaignsByMonth = campaigns.reduce((acc, campaign) => {
+                        const createdAt = campaign.created_at ? new Date(campaign.created_at) : new Date();
+                        const month = createdAt.toLocaleString('default', { month: 'short' });
+                        if (!acc[month]) {
+                            acc[month] = 0;
+                        }
+                        acc[month] += 1;
+                        return acc;
+                    }, {});
+                    
+                    // Combine campaign and donation data for trend chart
+                    const months = [...new Set([...Object.keys(donationsByMonth), ...Object.keys(campaignsByMonth)])];
+                    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    
+                    // Sort months chronologically
+                    months.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+                    
+                    const trendData = months.map(month => ({
+                        month,
+                        donations: donationsByMonth[month] || 0,
+                        campaigns: campaignsByMonth[month] || 0
+                    }));
+
                     setStats({
                         totalAmount,
                         totalDonations: donations.length,
+                        last7DaysAmount,
+                        trendData,
                         loading: false
                     });
                 }
@@ -41,7 +96,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
         };
 
         fetchDashboardData();
-    }, []);
+    }, [campaigns]);
 
     // Show loading indicator when either dashboard stats or user count is loading
     if (stats.loading || authLoading) {
@@ -51,6 +106,20 @@ const DashboardOverview = ({ campaigns = [] }) => {
             </div>
         );
     }
+
+    // Prepare data for campaign status pie chart
+    const campaignStatusData = [
+        { name: 'Pending', value: campaigns.filter(c => c.status === "pending").length, color: '#FBBF24' },
+        { name: 'Approved', value: campaigns.filter(c => c.status === "approved").length, color: '#34D399' },
+        { name: 'Rejected', value: campaigns.filter(c => c.status === "rejected").length, color: '#F87171' }
+    ];
+
+    // Prepare data for donation statistics bar chart
+    const donationStatsData = [
+        { name: 'Average Donation', value: stats.totalDonations > 0 ? (stats.totalAmount / stats.totalDonations) : 0, color: '#3B82F6' },
+        { name: 'Last 7 Days', value: stats.last7DaysAmount, color: '#8B5CF6' },
+        { name: 'Total Donations', value: stats.totalAmount, color: '#EAB308' }
+    ];
 
     return (
         <div className="space-y-6">
@@ -113,100 +182,85 @@ const DashboardOverview = ({ campaigns = [] }) => {
                 </div>
             </div>
 
-            {/* Campaign Status */}
-            {campaigns.length > 0 && (
+            {/* Campaign & Donation Trend Line Chart */}
+            <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Campaign & Donation Trends</h2>
+                <div className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={stats.trendData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis yAxisId="left" />
+                            <YAxis yAxisId="right" orientation="right" />
+                            <Tooltip />
+                            <Legend />
+                            <Line 
+                                yAxisId="left"
+                                type="monotone" 
+                                dataKey="donations" 
+                                name="Donations (NRs)" 
+                                stroke="#3B82F6" 
+                                activeDot={{ r: 8 }} 
+                            />
+                            <Line 
+                                yAxisId="right"
+                                type="monotone" 
+                                dataKey="campaigns" 
+                                name="Campaigns" 
+                                stroke="#10B981" 
+                                activeDot={{ r: 8 }} 
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Campaign Status Pie Chart */}
                 <div className="bg-white rounded-lg shadow p-6">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Campaign Status</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-gray-700">Pending Approval</h3>
-                                <span className="text-yellow-500 font-bold text-lg">
-                                    {campaigns.filter(c => c.status === "pending").length}
-                                </span>
-                            </div>
-                            <div className="overflow-hidden h-2 text-xs flex rounded bg-yellow-200">
-                                <div style={{
-                                    width: `${(campaigns.filter(c => c.status === "pending").length / campaigns.length) * 100}%`
-                                }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500"></div>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-gray-700">Approved</h3>
-                                <span className="text-green-500 font-bold text-lg">
-                                    {campaigns.filter(c => c.status === "approved").length}
-                                </span>
-                            </div>
-                            <div className="overflow-hidden h-2 text-xs flex rounded bg-green-200">
-                                <div style={{
-                                    width: `${(campaigns.filter(c => c.status === "approved").length / campaigns.length) * 100}%`
-                                }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
-                            </div>
-                        </div>
-
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-gray-700">Rejected</h3>
-                                <span className="text-red-500 font-bold text-lg">
-                                    {campaigns.filter(c => c.status === "rejected").length}
-                                </span>
-                            </div>
-                            <div className="overflow-hidden h-2 text-xs flex rounded bg-red-200">
-                                <div style={{
-                                    width: `${(campaigns.filter(c => c.status === "rejected").length / campaigns.length) * 100}%`
-                                }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
-                            </div>
-                        </div>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={campaignStatusData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {campaignStatusData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => [`${value}`, 'Count']} />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
-            )}
 
-            {/* Donation Statistics */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Donation Statistics</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-sm font-medium text-gray-700">Average Donation</h3>
-                            <span className="text-blue-500 font-bold text-lg">
-                                RS {stats.totalDonations > 0 ? (stats.totalAmount / stats.totalDonations).toFixed() : 0}
-                            </span>
-                        </div>
-                        <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200">
-                            <div style={{ width: '100%' }}
-                                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-sm font-medium text-gray-700">Donation Goal Progress</h3>
-                            <span className="text-purple-500 font-bold text-lg">
-                                {Math.min(100, ((stats.totalAmount / 1000000) * 100)).toFixed()}%
-                            </span>
-                        </div>
-                        <div className="overflow-hidden h-2 text-xs flex rounded bg-purple-200">
-                            <div style={{
-                                width: `${Math.min(100, (stats.totalAmount / 1000000) * 100)}%`
-                            }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500"></div>
-                        </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-sm font-medium text-gray-700">Total Number of Donations</h3>
-                            <span className="text-green-500 font-bold text-lg">
-                                {stats.totalDonations}
-                            </span>
-                        </div>
-                        <div className="overflow-hidden h-2 text-xs flex rounded bg-green-200">
-                            <div style={{
-                                width: '100%'
-                            }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
-                        </div>
+                {/* Donation Statistics Bar Chart */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Donation Statistics</h2>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={donationStatsData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar dataKey="value">
+                                    {donationStatsData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
             </div>
