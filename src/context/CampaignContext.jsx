@@ -150,6 +150,31 @@ export const CampaignProvider = ({ children }) => {
         );
     }, []);
 
+    const checkCampaignTitleExists = async (title) => {
+        try {
+            const config = {
+                headers: {}
+            };
+
+            if (authTokens?.access) {
+                config.headers.Authorization = `Bearer ${authTokens.access}`;
+            }
+
+            const response = await axios.get(
+                `http://127.0.0.1:8000/api/campaigns/?title=${encodeURIComponent(title)}`,
+                config
+            );
+
+            // If we get any campaigns back with this exact title, it exists
+            return response.data.some(campaign =>
+                campaign.campaign_title.toLowerCase() === title.toLowerCase()
+            );
+        } catch (err) {
+            console.error("Error checking campaign title:", err);
+            return false; // Assume title doesn't exist if there's an error
+        }
+    };
+
     return (
         <CampaignContext.Provider
             value={{
@@ -162,6 +187,7 @@ export const CampaignProvider = ({ children }) => {
                 deleteCampaign,
                 getCampaignById,
                 updateCampaignAmount,
+                checkCampaignTitleExists,
             }}
         >
             {children}

@@ -16,7 +16,7 @@ const CommentSection = ({ campaignId, comments, fetchComments }) => {
         if (!user) {
             if (setShowSlider) {
                 setShowSlider(true);
-                alert("Please log in to comment."); // Optional: You can remove this if you prefer
+                
             } else {
                 navigate("/login");
             }
@@ -196,7 +196,7 @@ const CommentSection = ({ campaignId, comments, fetchComments }) => {
         ));
     };
 
-    // Display only top 3 comments if showAllComments is false
+    
     const displayedComments = showAllComments ? comments : comments.slice(0, 3);
 
     return (

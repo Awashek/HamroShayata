@@ -7,15 +7,21 @@ const SignUp = ({ onRegistrationSuccess }) => {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [error, setError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   
   const { registerUser } = useContext(AuthContext);
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
-  const validatePassword = (password) => password.length >= 8; // Example of password validation
+  const validatePassword = (password) => password.length >= 8; 
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setUsernameError("");
+    setEmailError("");
   
+    // Frontend validation
     if (!username || !email || !password || !password2) {
       setError("Please fill all fields");
       return;
@@ -40,12 +46,34 @@ const SignUp = ({ onRegistrationSuccess }) => {
   
     if (response.status === 201) {
       setIsSuccessModalOpen(true);
-      onRegistrationSuccess();  // Call the function passed from Navbar to toggle back to login
+      onRegistrationSuccess();
     } else {
-      setError("Registration failed, please try again.");
+      // Handle backend validation errors
+      const { errorData } = response;
+      
+      if (errorData.username) {
+        setUsernameError(errorData.username.join(' '));
+      }
+      
+      if (errorData.email) {
+        setEmailError(errorData.email.join(' '));
+      }
+      
+      if (errorData.password) {
+        setError(errorData.password.join(' '));
+      }
+      
+      if (errorData.detail) {
+        setError(errorData.detail);
+      }
+      
+      // Fallback for unexpected error formats
+      if (!errorData.username && !errorData.email && !errorData.password && !errorData.detail) {
+        setError("Registration failed. Please check your inputs.");
+      }
     }
   };
-  
+
   const closeSuccessModal = () => {
     setIsSuccessModalOpen(false);
   };
@@ -61,10 +89,18 @@ const SignUp = ({ onRegistrationSuccess }) => {
             name="username"
             placeholder="Enter your username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setUsernameError(""); // Clear error when typing
+            }}
+            className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD] ${
+              usernameError ? "border-red-500" : ""
+            }`}
             required
           />
+          {usernameError && (
+            <p className="text-red-500 text-sm mt-1">{usernameError}</p>
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 mb-1">Email</label>
@@ -73,10 +109,18 @@ const SignUp = ({ onRegistrationSuccess }) => {
             name="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD]"
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError(""); // Clear error when typing
+            }}
+            className={`w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1C9FDD] ${
+              emailError ? "border-red-500" : ""
+            }`}
             required
           />
+          {emailError && (
+            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-gray-700 mb-1">Password</label>
@@ -102,10 +146,10 @@ const SignUp = ({ onRegistrationSuccess }) => {
             required
           />
         </div>
-        {error && <div className="text-red-500">{error}</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
         <button
           type="submit"
-          className="w-full bg-[#1C9FDD] text-white py-2 rounded-md"
+          className="w-full bg-[#1C9FDD] text-white py-2 rounded-md hover:bg-[#1688b8] transition-colors"
         >
           Sign Up
         </button>

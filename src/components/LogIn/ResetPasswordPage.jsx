@@ -29,7 +29,7 @@ const ResetPasswordPage = () => {
 
         if (success) {
             setMessage(message);
-            setTimeout(() => navigate("/login"), 3000);
+            setTimeout(() => navigate("/"), 3000);
         } else {
             setError(message);
         }

@@ -6,7 +6,7 @@ import CampaignsComponent from "./CampaignsComponent";
 import UsersComponent from "./UsersComponent";
 import DonationsComponent from "./DonationsComponent";
 import DashboardOverview from "./DashboardOverview";
-import useAxios from "../../utils/useAxios";
+
 
 const AdminDashboard = () => {
     const { campaigns, loading: campaignsLoading } = useCampaigns();
@@ -15,24 +15,9 @@ const AdminDashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [donations, setDonations] = useState([]);
     const [donationsLoading, setDonationsLoading] = useState(true);
-    const axiosInstance = useAxios();
+    
 
-    // Fetch donations data for dashboard overview
-    useEffect(() => {
-        const fetchDonations = async () => {
-            try {
-                setDonationsLoading(true);
-                const response = await axiosInstance.get('/donations/all-donations/');
-                setDonations(response.data);
-            } catch (err) {
-                console.error("Error fetching donations:", err);
-            } finally {
-                setDonationsLoading(false);
-            }
-        };
-        
-        fetchDonations();
-    }, []);
+    
 
     // Ensure only admins can access this dashboard
     useEffect(() => {

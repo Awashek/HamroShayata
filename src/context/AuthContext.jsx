@@ -18,10 +18,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [showSlider, setShowSlider] = useState(false);
- 
+
   const navigate = useNavigate();
 
-  // Effect for handling auth tokens and user data
   useEffect(() => {
     if (authTokens) {
       const decodedUser = jwtDecode(authTokens.access);
@@ -32,11 +31,9 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(decodedUser);
 
-        // Fetch users after authentication is confirmed
-        fetchUsers();
-
-        // Redirect to dashboard if the user is an admin
+        // Only fetch users if admin
         if (decodedUser.is_admin) {
+          fetchUsers();
           navigate("/dashboard");
         }
       }
@@ -44,9 +41,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, [authTokens, navigate]);
 
-  // Function to fetch users
   const fetchUsers = async () => {
-    // Only fetch if we have tokens
     if (!authTokens) {
       setAuthLoading(false);
       return;
@@ -59,14 +54,22 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
+      if (response.status === 403) {
+        // Handle forbidden case specifically
+        console.error("Access denied - insufficient permissions");
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error("Failed to fetch users");
+        throw new Error(`Failed to fetch users: ${response.statusText}`);
       }
 
       const data = await response.json();
       setUserCount(data.length);
     } catch (err) {
       console.error("Error fetching users:", err);
+      // Consider showing a toast notification for the user
+      toast.error("Could not load user data. You may not have sufficient permissions.");
     } finally {
       setAuthLoading(false);
     }
@@ -129,25 +132,70 @@ export const AuthProvider = ({ children }) => {
           password2,
         }),
       });
-
+  
+      const data = await response.json();
+  
       if (response.status === 201) {
-        // Show success toast
         toast.success('Registration successful! Please log in.', {
           position: "top-right",
           autoClose: 5000,
         });
-        return { status: 201 };
+        return { status: 201, data };
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Registration failed");
+        // Handle different error cases with specific messages
+        if (response.status === 400) {
+          if (data.username) {
+            toast.error(`Username error: ${data.username[0]}`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          } else if (data.email) {
+            toast.error(`Email error: ${data.email[0]}`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          } else if (data.password) {
+            toast.error(`Password error: ${data.password[0]}`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          } else if (data.password2) {
+            toast.error(`Password confirmation error: ${data.password2[0]}`, {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          } else if (data.non_field_errors) {
+            toast.error(data.non_field_errors[0], {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          } else {
+            toast.error('Registration failed. Please check your details.', {
+              position: "top-right",
+              autoClose: 5000,
+            });
+          }
+        } else {
+          toast.error('Registration failed. Please try again.', {
+            position: "top-right",
+            autoClose: 5000,
+          });
+        }
+        
+        return { 
+          status: response.status, 
+          errorData: data 
+        };
       }
     } catch (error) {
-      // Show error toast
-      toast.error(error.message || 'Registration failed. Please try again.', {
+      toast.error('Network error. Please try again.', {
         position: "top-right",
         autoClose: 5000,
       });
-      return { status: 500, errorData: error.message };
+      return { 
+        status: 500, 
+        errorData: { detail: 'Network error. Please try again.' } 
+      };
     }
   };
 
@@ -266,7 +314,7 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     getAccessToken,
     authLoading,
-    showSlider, 
+    showSlider,
     setShowSlider
   };
 

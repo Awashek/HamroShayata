@@ -2,18 +2,20 @@ import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCampaigns } from "../../context/CampaignContext";
 
-const CampaignList = ({ 
-    isHomePage = false, 
-    filterCategory = "all", 
-    searchQuery = "", 
-    currentPage = 1, 
+const CampaignList = ({
+    isHomePage = false,
+    filterCategory = "all",
+    searchQuery = "",
+    currentPage = 1,
     itemsPerPage = 9,
-    onPaginationUpdate 
+    onPaginationUpdate
 }) => {
     const { campaigns, loading } = useCampaigns();
 
-    // Filter and paginate campaigns
-    const approvedCampaigns = campaigns.filter((campaign) => campaign.status === "approved");
+    // Filter approved campaigns and sort by creation date (newest first)
+    const approvedCampaigns = campaigns
+        .filter((campaign) => campaign.status === "approved")
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // Newest first
 
     // Filter by category
     const filteredByCategory = filterCategory === "all"
@@ -28,8 +30,8 @@ const CampaignList = ({
     // Calculate pagination
     const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedCampaigns = isHomePage 
-        ? approvedCampaigns.slice(0, 6) 
+    const paginatedCampaigns = isHomePage
+        ? approvedCampaigns.slice(0, 6)
         : filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
 
     // Update pagination in parent component
@@ -56,12 +58,12 @@ const CampaignList = ({
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-800">No campaigns found</h3>
                 <p className="text-gray-600 mt-2 max-w-md mx-auto">
-                    {searchQuery || filterCategory !== "all" 
-                        ? "Try adjusting your search or filter criteria" 
+                    {searchQuery || filterCategory !== "all"
+                        ? "Try adjusting your search or filter criteria"
                         : "There are currently no active campaigns. Check back later!"}
                 </p>
                 {searchQuery || filterCategory !== "all" ? (
-                    <button 
+                    <button
                         onClick={() => window.location.reload()}
                         className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                     >
@@ -84,13 +86,13 @@ const CampaignList = ({
                     </p>
                 </div>
             )}
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {paginatedCampaigns.map((campaign) => {
                     const raisedAmount = parseFloat(campaign.current_amount || 0);
                     const goalAmount = parseFloat(campaign.goal_amount || campaign.goal || 1);
                     const progressPercentage = Math.min((raisedAmount / goalAmount) * 100, 100);
-                    const daysLeft = campaign.end_date 
+                    const daysLeft = campaign.end_date
                         ? Math.max(0, Math.ceil((new Date(campaign.end_date) - new Date()) / (1000 * 60 * 60 * 24)))
                         : null;
 
@@ -159,22 +161,20 @@ const CampaignList = ({
                                                 maximumFractionDigits: 0
                                             })}
                                         </span>
-                                        <span className={`font-semibold ${
-                                            progressPercentage >= 100 ? 'text-green-600' : 'text-blue-600'
-                                        }`}>
+                                        <span className={`font-semibold ${progressPercentage >= 100 ? 'text-green-600' : 'text-blue-600'
+                                            }`}>
                                             {progressPercentage.toFixed(0)}%
                                         </span>
                                     </div>
-                                    
+
                                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                                         <div
-                                            className={`h-2.5 rounded-full ${
-                                                progressPercentage >= 100 ? 'bg-green-500' : 'bg-blue-500'
-                                            }`}
+                                            className={`h-2.5 rounded-full ${progressPercentage >= 100 ? 'bg-green-500' : 'bg-blue-500'
+                                                }`}
                                             style={{ width: `${progressPercentage}%` }}
                                         ></div>
                                     </div>
-                                    
+
                                     <div className="text-xs text-gray-500">
                                         Goal: Rs {goalAmount.toLocaleString(undefined, {
                                             minimumFractionDigits: 0,
@@ -184,12 +184,11 @@ const CampaignList = ({
                                 </div>
 
                                 {/* CTA Button */}
-                                <button 
-                                    className={`w-full mt-4 py-2 px-4 rounded-lg font-medium text-white transition-colors ${
-                                        progressPercentage >= 100 
-                                            ? 'bg-green-500 hover:bg-green-600' 
+                                <button
+                                    className={`w-full mt-4 py-2 px-4 rounded-lg font-medium text-white transition-colors ${progressPercentage >= 100
+                                            ? 'bg-green-500 hover:bg-green-600'
                                             : 'bg-blue-500 hover:bg-blue-600'
-                                    }`}
+                                        }`}
                                 >
                                     {progressPercentage >= 100 ? 'Successfully Funded' : 'Support Now'}
                                 </button>
@@ -202,13 +201,17 @@ const CampaignList = ({
             {/* Show More Button (only on homepage) */}
             {isHomePage && approvedCampaigns.length > 6 && (
                 <div className="flex justify-center mt-12">
-                    <Link
-                        to="/all-campaigns"
-                        className="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md 
-                                hover:bg-blue-600 hover:shadow-lg transition-all duration-300"
+                    <a
+                        href="/all-campaigns"
+                        className="px-6 py-3 bg-blue-500 text-white font-medium rounded-lg
+                            shadow-sm hover:bg-blue-600 hover:shadow-md transition-all duration-200
+                            border-2 border-blue-400 flex items-center"
                     >
-                        View All Campaigns
-                    </Link>
+                        <span>View All Campaigns</span>
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
                 </div>
             )}
         </div>

@@ -28,26 +28,29 @@ const DashboardOverview = ({ campaigns = [] }) => {
                 const response = await axiosInstance.get('donations/');
 
                 if (response.data) {
-                    const donations = response.data.map(donation => ({
-                        id: donation.id,
-                        amount: parseFloat(donation.amount),
-                        date: donation.created_at ? new Date(donation.created_at) : new Date()
-                    }));
+                    // Filter to only include completed donations
+                    const completedDonations = response.data
+                        .filter(donation => donation.status === "completed" || donation.status === "Completed")
+                        .map(donation => ({
+                            id: donation.id,
+                            amount: parseFloat(donation.amount),
+                            date: donation.created_at ? new Date(donation.created_at) : new Date()
+                        }));
 
-                    // Calculate total amount
-                    const totalAmount = donations.reduce((acc, donation) => acc + donation.amount, 0);
+                    // Calculate total amount from completed donations only
+                    const totalAmount = completedDonations.reduce((acc, donation) => acc + donation.amount, 0);
 
-                    // Calculate last 7 days amount
+                    // Calculate last 7 days amount from completed donations only
                     const sevenDaysAgo = new Date();
                     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
                     
-                    const last7DaysAmount = donations
+                    const last7DaysAmount = completedDonations
                         .filter(donation => donation.date >= sevenDaysAgo)
                         .reduce((acc, donation) => acc + donation.amount, 0);
 
-                    // Create donation history data for the line chart
-                    // Group donations by month for the chart
-                    const donationsByMonth = donations.reduce((acc, donation) => {
+                    // Create donation history data for the line chart using completed donations
+                    // Group completed donations by month for the chart
+                    const donationsByMonth = completedDonations.reduce((acc, donation) => {
                         const month = donation.date.toLocaleString('default', { month: 'short' });
                         if (!acc[month]) {
                             acc[month] = 0;
@@ -82,7 +85,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
 
                     setStats({
                         totalAmount,
-                        totalDonations: donations.length,
+                        totalDonations: completedDonations.length,
                         last7DaysAmount,
                         trendData,
                         loading: false
@@ -198,7 +201,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
                                 yAxisId="left"
                                 type="monotone" 
                                 dataKey="donations" 
-                                name="Donations (NRs)" 
+                                name="Completed Donations (NRs)" 
                                 stroke="#3B82F6" 
                                 activeDot={{ r: 8 }} 
                             />
@@ -246,7 +249,7 @@ const DashboardOverview = ({ campaigns = [] }) => {
 
                 {/* Donation Statistics Bar Chart */}
                 <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">Donation Statistics</h2>
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">Completed Donation Statistics</h2>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={donationStatsData}>

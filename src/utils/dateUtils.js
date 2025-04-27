@@ -1,4 +1,3 @@
-// utils/dateUtils.js
 export const calculateDaysLeft = (deadline) => {
   if (!deadline) return 0;
 
@@ -12,5 +11,5 @@ export const calculateDaysLeft = (deadline) => {
   const timeDiff = endDate - today;
   const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
-  return daysLeft > 0 ? daysLeft : 0; // Return 0 if deadline has passed
+  return daysLeft > 0 ? daysLeft : 0; 
 };

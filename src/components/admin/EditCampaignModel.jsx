@@ -8,7 +8,10 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
         deadline: "",
         status: "",
         images: null,
-        citizenship_id: null
+        citizenship_id: null,
+        first_name: "",          
+        last_name: "",           
+        category: ""             
     });
     const [previewImage, setPreviewImage] = useState(null);
     const [previewCitizenship, setPreviewCitizenship] = useState(null);
@@ -16,13 +19,17 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
     useEffect(() => {
         if (campaign) {
             setFormData({
+                ...campaign,
                 campaign_title: campaign.campaign_title || "",
                 description: campaign.description || "",
-                goal_amount: campaign.goal_amount || "",
+                goal_amount: campaign.goal_amount ? Math.floor(campaign.goal_amount) : "", 
                 deadline: campaign.deadline ? campaign.deadline.split('T')[0] : "",
                 status: campaign.status || "pending",
                 images: null,
-                citizenship_id: null
+                citizenship_id: null,
+                first_name: campaign.first_name || "",   
+                last_name: campaign.last_name || "",      
+                category: campaign.category || ""         
             });
             setPreviewImage(campaign.images || null);
             setPreviewCitizenship(campaign.citizenship_id || null);
@@ -72,6 +79,33 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
                     <h3 className="text-lg font-medium text-gray-900">Edit Campaign</h3>
                 </div>
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                    {/* Personal Information Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input
+                                type="text"
+                                name="first_name"
+                                value={formData.first_name}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input
+                                type="text"
+                                name="last_name"
+                                value={formData.last_name}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {/* Campaign Information */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Title</label>
@@ -85,16 +119,22 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Goal Amount (Rs)</label>
-                            <input
-                                type="number"
-                                name="goal_amount"
-                                value={formData.goal_amount}
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select
+                                name="category"
+                                value={formData.category}
                                 onChange={handleChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                 required
-                                min="1"
-                            />
+                            >
+                                <option value="">Select a category</option>
+                                <option value="medical">Medical</option>
+                                <option value="education">Education</option>
+                                <option value="disaster">Disaster Relief</option>
+                                <option value="personal">Personal</option>
+                                <option value="community">Community</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
                     </div>
 
@@ -112,6 +152,18 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Goal Amount (Rs)</label>
+                            <input
+                                type="number"
+                                name="goal_amount"
+                                value={formData.goal_amount}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                required
+                                min="1"
+                            />
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
                             <input
                                 type="date"
@@ -123,20 +175,21 @@ const EditCampaignModal = ({ campaign, isOpen, onClose, onUpdate, loading }) => 
                                 min={new Date().toISOString().split('T')[0]}
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <select
-                                name="status"
-                                value={formData.status}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                required
-                            >
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                            name="status"
+                            value={formData.status}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            required
+                        >
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -228,12 +228,7 @@ const CampaignDetails = () => {
                             <p className="text-gray-600 text-sm">Donors</p>
                         </div>
                         {/* Updated shares display */}
-                        <div className="bg-purple-50 p-4 rounded-xl text-center">
-                            <p className="text-purple-800 font-bold text-2xl">
-                                {shareStats.total_shares || 0}
-                            </p>
-                            <p className="text-gray-600 text-sm">Shares</p>
-                        </div>
+                      
                     </div>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { ChevronLeft, ChevronRight, Users, Shield, Award, Search, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users, Shield, Award, RefreshCw } from "lucide-react";
+import UsersFilter from "./Filters/UsersFilters";
 
 const UsersComponent = () => {
     const [users, setUsers] = useState([]);
@@ -10,16 +11,18 @@ const UsersComponent = () => {
     const [userSubscriptions, setUserSubscriptions] = useState({});
     const [filters, setFilters] = useState({
         role: "all",
-        search: ""
+        search: "",
+        subscription: "all",
+        fromDate: "",
+        toDate: ""
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [refreshing, setRefreshing] = useState(false);
     const usersPerPage = 10;
-
     const { getAccessToken, setUserCount } = useContext(AuthContext);
     const { authTokens } = useContext(AuthContext);
 
-    // Fetch both users and their subscriptions
+    
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -52,7 +55,6 @@ const UsersComponent = () => {
             // Map subscriptions to users
             const subsData = subsResponse.ok ? await subsResponse.json() : [];
             const subscriptionMap = {};
-
             subsData.forEach(sub => {
                 // Assuming each subscription has a user_id or user field
                 const userId = sub.user_id || sub.user;
@@ -86,11 +88,13 @@ const UsersComponent = () => {
 
     const applyFilters = () => {
         let result = [...users];
+    
         // Filter by role
         if (filters.role !== "all") {
             const isAdmin = filters.role === "admin";
             result = result.filter(user => user.is_admin === isAdmin);
         }
+    
         // Filter by search term (username or email)
         if (filters.search) {
             const searchTerm = filters.search.toLowerCase();
@@ -100,6 +104,40 @@ const UsersComponent = () => {
                     user.email.toLowerCase().includes(searchTerm)
             );
         }
+        
+        // Filter by subscription type
+        if (filters.subscription !== "all") {
+            if (filters.subscription === "none") {
+                // Filter users with no subscription
+                result = result.filter(user => !userSubscriptions[user.id]);
+            } else {
+                // Filter users with specific subscription type
+                result = result.filter(user => {
+                    const userSub = userSubscriptions[user.id];
+                    return userSub && userSub.subscription_type === filters.subscription;
+                });
+            }
+        }
+        
+        // Filter by date range (assuming each user has a date_joined or created_at field)
+        if (filters.fromDate) {
+            const fromDate = new Date(filters.fromDate);
+            result = result.filter(user => {
+                const userDate = new Date(user.date_joined || user.created_at);
+                return userDate >= fromDate;
+            });
+        }
+        
+        if (filters.toDate) {
+            const toDate = new Date(filters.toDate);
+            // Set time to end of day
+            toDate.setHours(23, 59, 59, 999);
+            result = result.filter(user => {
+                const userDate = new Date(user.date_joined || user.created_at);
+                return userDate <= toDate;
+            });
+        }
+    
         setFilteredUsers(result);
         setCurrentPage(1); // Reset to first page when filters change
     };
@@ -123,7 +161,6 @@ const UsersComponent = () => {
             'silver': 'Silver',
             'gold': 'Gold'
         };
-
         return planTypes[subscriptionType] || 'No Subscription';
     };
 
@@ -131,7 +168,6 @@ const UsersComponent = () => {
     const getUserSubscription = (userId) => {
         const userSub = userSubscriptions[userId];
         if (!userSub) return "No Subscription";
-
         return getSubscriptionName(userSub.subscription_type);
     };
 
@@ -205,7 +241,6 @@ const UsersComponent = () => {
                         <p className="text-2xl font-bold text-indigo-600">{users.length}</p>
                     </div>
                 </div>
-
                 <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 flex items-center">
                     <div className="bg-green-100 p-3 rounded-full mr-4">
                         <Users className="w-6 h-6 text-green-600" />
@@ -217,7 +252,6 @@ const UsersComponent = () => {
                         </p>
                     </div>
                 </div>
-
                 <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 flex items-center">
                     <div className="bg-purple-100 p-3 rounded-full mr-4">
                         <Shield className="w-6 h-6 text-purple-600" />
@@ -249,41 +283,12 @@ const UsersComponent = () => {
                     </div>
                 </div>
 
-                {/* Filter Controls */}
-                <div className="p-4 border-b border-gray-200 bg-white">
-                    <div className="flex flex-wrap gap-4 items-end">
-                        <div className="flex-1 min-w-[200px]">
-                            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
-                            <div className="relative rounded-md">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Search className="h-4 w-4 text-gray-400" />
-                                </div>
-                                <input
-                                    type="text"
-                                    id="search"
-                                    placeholder="Username or email"
-                                    className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                                    value={filters.search}
-                                    onChange={(e) => handleFilterChange("search", e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="w-40">
-                            <label htmlFor="role-filter" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                            <select
-                                id="role-filter"
-                                className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border w-full"
-                                value={filters.role}
-                                onChange={(e) => handleFilterChange("role", e.target.value)}
-                            >
-                                <option value="all">All Roles</option>
-                                <option value="admin">Admin</option>
-                                <option value="user">User</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                {/* Imported Filter Component */}
+                <UsersFilter 
+                    filters={filters}
+                    handleFilterChange={handleFilterChange}
+                    setFilters={setFilters}
+                />
 
                 {/* Table */}
                 <div className="overflow-x-auto">
@@ -323,7 +328,6 @@ const UsersComponent = () => {
                                 currentUsers.map((user) => {
                                     const subscription = getUserSubscription(user.id);
                                     const subscriptionStyle = getSubscriptionStyle(subscription);
-
                                     return (
                                         <tr key={user.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -388,20 +392,18 @@ const UsersComponent = () => {
                             </span>{" "}
                             of <span className="font-medium">{filteredUsers.length}</span> users
                         </div>
-
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => paginate(currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium 
-                  ${currentPage === 1
+                                className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium
+                                    ${currentPage === 1
                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                                         : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
                             >
                                 <ChevronLeft className="h-4 w-4 mr-1" />
                                 Previous
                             </button>
-
                             <div className="flex items-center">
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                     // For simplicity, show up to 5 page buttons
@@ -415,13 +417,12 @@ const UsersComponent = () => {
                                     } else {
                                         pageNum = currentPage - 2 + i;
                                     }
-
                                     return (
                                         <button
                                             key={pageNum}
                                             onClick={() => paginate(pageNum)}
                                             className={`inline-flex items-center justify-center w-8 h-8 mx-1 rounded-md text-sm font-medium
-                        ${currentPage === pageNum
+                                                ${currentPage === pageNum
                                                     ? 'bg-indigo-600 text-white'
                                                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
                                         >
@@ -430,12 +431,11 @@ const UsersComponent = () => {
                                     );
                                 })}
                             </div>
-
                             <button
                                 onClick={() => paginate(currentPage + 1)}
                                 disabled={currentPage === totalPages}
-                                className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium 
-                  ${currentPage === totalPages || totalPages === 0
+                                className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium
+                                    ${currentPage === totalPages || totalPages === 0
                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                                         : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
                             >

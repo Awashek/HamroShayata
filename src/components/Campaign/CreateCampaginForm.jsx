@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const CreateCampaignForm = () => {
     const { authTokens } = useContext(AuthContext);
-    const { createCampaign } = useCampaigns();
+    const { createCampaign, checkCampaignTitleExists } = useCampaigns();
     const navigate = useNavigate();
 
     const [step, setStep] = useState(1);
@@ -27,24 +27,122 @@ const CreateCampaignForm = () => {
         status: 'pending', // Default status
     });
 
-    const handleChange = (e) => {
+    // File validation constants
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    const MAX_ID_SIZE = 2 * 1024 * 1024; // 2MB
+    const ALLOWED_ID_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+
+    const handleChange = async (e) => {
         const { name, value, files } = e.target;
+
+        // Only trim values for fields other than campaign_title and description
+        // This allows spaces in the campaign title and description
+        let processedValue;
+        if (name === 'campaign_title' || name === 'description') {
+            processedValue = value; // Don't trim to allow spaces
+        } else {
+            processedValue = value.trim(); // Trim other fields
+        }
+
         setFormData((prev) => ({
             ...prev,
-            [name]: files ? files[0] : value.trim(),
+            [name]: files ? files[0] : processedValue,
         }));
 
         if (errors[name]) {
             setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
         }
+
+        // Special handling for campaign title - check if it exists
+        if (name === 'campaign_title' && value) {
+            try {
+                // We still need to check with trimmed value to avoid false duplicates
+                const titleToCheck = value.trim();
+                if (titleToCheck) {
+                    const titleExists = await checkCampaignTitleExists(titleToCheck);
+                    if (titleExists) {
+                        setErrors((prevErrors) => ({
+                            ...prevErrors,
+                            campaign_title: "Campaign title already exists. Please choose a different title."
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error("Error validating title:", error);
+            }
+        }
+    };
+
+    const validateFile = (file, maxSize, allowedTypes, fieldName) => {
+        if (!file) return null;
+
+        // Check if it's a valid file object
+        if (!(file instanceof File)) {
+            return `Invalid ${fieldName} file.`;
+        }
+
+        // Check file size
+        if (file.size > maxSize) {
+            return `${fieldName} exceeds maximum size of ${maxSize / (1024 * 1024)}MB.`;
+        }
+
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+            return `${fieldName} must be one of the following: ${allowedTypes.map(type => type.split('/')[1]).join(', ')}.`;
+        }
+
+        return null;
     };
 
     const handleFileChange = (e) => {
         const { name, files } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: files[0],
-        }));
+
+        if (!files || files.length === 0) {
+            setFormData((prev) => ({ ...prev, [name]: null }));
+            return;
+        }
+
+        const file = files[0];
+        let errorMessage = null;
+
+        // Validate based on file type
+        if (name === 'images') {
+            errorMessage = validateFile(file, MAX_IMAGE_SIZE, ALLOWED_IMAGE_TYPES, 'Campaign image');
+
+            // Optional: Validate image dimensions
+            if (!errorMessage && file.type.startsWith('image/')) {
+                const img = new Image();
+                img.onload = () => {
+                    // Check if image is too small
+                    if (img.width < 500 || img.height < 300) {
+                        setErrors(prev => ({
+                            ...prev,
+                            images: "Image dimensions should be at least 500x300 pixels."
+                        }));
+                    }
+                    URL.revokeObjectURL(img.src);
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        } else if (name === 'citizenship_id') {
+            errorMessage = validateFile(file, MAX_ID_SIZE, ALLOWED_ID_TYPES, 'ID document');
+        }
+
+        // Update errors state if validation failed
+        if (errorMessage) {
+            setErrors(prev => ({ ...prev, [name]: errorMessage }));
+            // Don't update formData if validation failed
+            return;
+        }
+
+        // Clear errors if validation passed
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: "" }));
+        }
+
+        // Update formData with valid file
+        setFormData(prev => ({ ...prev, [name]: file }));
     };
 
     const validateStep = () => {
@@ -52,27 +150,56 @@ const CreateCampaignForm = () => {
         if (step === 1) {
             if (!formData.first_name) newErrors.first_name = "First Name is required";
             if (!formData.last_name) newErrors.last_name = "Last Name is required";
-            if (!formData.campaign_title) newErrors.campaign_title = "Campaign Title is required";
+            if (!formData.campaign_title) {
+                newErrors.campaign_title = "Campaign Title is required";
+            } else if (errors.campaign_title && errors.campaign_title.includes("already exists")) {
+                newErrors.campaign_title = errors.campaign_title;
+            }
             if (!formData.category) newErrors.category = "Category is required";
         } else if (step === 2) {
             if (!formData.description) newErrors.description = "Description is required";
-            if (!formData.goal_amount) newErrors.goal_amount = "Goal Amount is required";
-            else if (isNaN(parseFloat(formData.goal_amount))) {
-                newErrors.goal_amount = "A valid number is required.";
+
+            // Enhanced goal amount validation
+            if (!formData.goal_amount) {
+                newErrors.goal_amount = "Goal Amount is required";
+            } else {
+                const amount = parseFloat(formData.goal_amount);
+                if (isNaN(amount)) {
+                    newErrors.goal_amount = "A valid number is required.";
+                } else if (amount <= 10) {
+                    newErrors.goal_amount = "Amount must be greater than 10.";
+                } else if (amount > 10000000) { // Example: 10 million as max
+                    newErrors.goal_amount = "Amount is too large. Please contact support for large campaigns.";
+                }
             }
-            if (!formData.deadline) newErrors.deadline = "Deadline is required";
-            else {
+
+            if (!formData.deadline) {
+                newErrors.deadline = "Deadline is required";
+            } else {
                 const deadlineDate = new Date(formData.deadline);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+
                 if (isNaN(deadlineDate.getTime())) {
                     newErrors.deadline = "Date has wrong format. Use YYYY-MM-DD.";
+                } else if (deadlineDate <= today) {
+                    newErrors.deadline = "Deadline must be in the future.";
                 }
             }
         } else if (step === 3) {
-            if (formData.images && !(formData.images instanceof File)) {
-                newErrors.images = "Invalid file format.";
+            // File validations remain the same
+            if (!formData.images) {
+                newErrors.images = "Campaign image is required.";
+            } else {
+                const imageError = validateFile(formData.images, MAX_IMAGE_SIZE, ALLOWED_IMAGE_TYPES, 'Campaign image');
+                if (imageError) newErrors.images = imageError;
             }
-            if (formData.citizenship_id && !(formData.citizenship_id instanceof File)) {
-                newErrors.citizenship_id = "Invalid file format.";
+
+            if (!formData.citizenship_id) {
+                newErrors.citizenship_id = "Citizenship ID is required.";
+            } else {
+                const idError = validateFile(formData.citizenship_id, MAX_ID_SIZE, ALLOWED_ID_TYPES, 'ID document');
+                if (idError) newErrors.citizenship_id = idError;
             }
         }
         setErrors(newErrors);
@@ -81,7 +208,7 @@ const CreateCampaignForm = () => {
 
     const validateForm = () => {
         let newErrors = {};
-        const requiredFields = ["first_name", "last_name", "campaign_title", "description", "goal_amount", "deadline", "category"];
+        const requiredFields = ["first_name", "last_name", "campaign_title", "description", "goal_amount", "deadline", "category", "images", "citizenship_id"];
 
         requiredFields.forEach(field => {
             if (!formData[field]) {
@@ -95,17 +222,25 @@ const CreateCampaignForm = () => {
 
         if (formData.deadline) {
             const deadlineDate = new Date(formData.deadline);
+            const today = new Date();
+
             if (isNaN(deadlineDate.getTime())) {
                 newErrors.deadline = "Date has wrong format. Use YYYY-MM-DD.";
+            } else if (deadlineDate <= today) {
+                newErrors.deadline = "Deadline must be in the future.";
             }
         }
 
-        if (formData.images && !(formData.images instanceof File)) {
-            newErrors.images = "Invalid file format.";
+        // Validate image file
+        if (formData.images) {
+            const imageError = validateFile(formData.images, MAX_IMAGE_SIZE, ALLOWED_IMAGE_TYPES, 'Campaign image');
+            if (imageError) newErrors.images = imageError;
         }
 
-        if (formData.citizenship_id && !(formData.citizenship_id instanceof File)) {
-            newErrors.citizenship_id = "Invalid file format.";
+        // Validate ID file if provided
+        if (formData.citizenship_id) {
+            const idError = validateFile(formData.citizenship_id, MAX_ID_SIZE, ALLOWED_ID_TYPES, 'ID document');
+            if (idError) newErrors.citizenship_id = idError;
         }
 
         setErrors(newErrors);
@@ -162,7 +297,7 @@ const CreateCampaignForm = () => {
             const response = await createCampaign(formDataToSend);
             if (response.success) {
                 setSuccessMessage("Campaign created successfully! It is now pending admin approval.");
-                setShowSuccess(true); // Add this line
+                setShowSuccess(true);
                 setShowReview(false); // Close the review modal
 
                 setFormData({
@@ -205,6 +340,15 @@ const CreateCampaignForm = () => {
         return file.name;
     };
 
+    // File size formatter
+    const formatFileSize = (bytes) => {
+        if (!bytes) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
     // Review Modal Component
     const ReviewModal = () => {
         if (!showReview) return null;
@@ -240,8 +384,8 @@ const CreateCampaignForm = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-700">Documents</h3>
-                                    <p><span className="text-gray-500">Images:</span> {getFileName(formData.images)}</p>
-                                    <p><span className="text-gray-500">Citizenship ID:</span> {formData.citizenship_id ? getFileName(formData.citizenship_id) : 'Not provided'}</p>
+                                    <p><span className="text-gray-500">Images:</span> {getFileName(formData.images)} ({formData.images ? formatFileSize(formData.images.size) : '-'})</p>
+                                    <p><span className="text-gray-500">Citizenship ID:</span> {formData.citizenship_id ? `${getFileName(formData.citizenship_id)} (${formatFileSize(formData.citizenship_id.size)})` : 'Not provided'}</p>
                                 </div>
                             </div>
                         </div>
@@ -280,7 +424,7 @@ const CreateCampaignForm = () => {
                         </svg>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Campaign Created Successfully!</h2>
-                    <p className="text-gray-600 mb-6">Your campaign has been submitted and is pending approval. You will receive an update once it's reviewed.</p>
+                    <p className="text-gray-600 mb-6">{successMessage}</p>
                     <button
                         onClick={closeSuccessModal}
                         className="bg-[#1C9FDD] text-white py-3 px-8 rounded-lg hover:bg-[#0f7fb8] transition-all duration-300 w-full md:w-auto"
@@ -387,9 +531,9 @@ const CreateCampaignForm = () => {
                             {step === 3 && (
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Upload Images</label>
+                                        <label className="block text-gray-700 font-medium mb-2">Upload Images <span className="text-red-500">*</span></label>
                                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                            <input name="images" type="file" onChange={handleFileChange}
+                                            <input name="images" type="file" onChange={handleFileChange} accept={ALLOWED_IMAGE_TYPES.join(',')}
                                                 className="hidden" id="images-upload" />
                                             <label htmlFor="images-upload" className="cursor-pointer">
                                                 <div className="text-[#1C9FDD] mb-2">
@@ -398,20 +542,25 @@ const CreateCampaignForm = () => {
                                                     </svg>
                                                 </div>
                                                 <p className="text-gray-700 font-medium">Click to upload your campaign image</p>
-                                                <p className="text-gray-500 text-sm mt-1">Showcase your campaign with an image</p>
+                                                <p className="text-gray-500 text-sm mt-1">
+                                                    Accepted formats: JPG, PNG, WEBP (Max: 5MB)
+                                                </p>
+                                                <p className="text-gray-500 text-xs mt-1">
+                                                    Recommended size: at least 500x300 pixels
+                                                </p>
                                             </label>
                                             {formData.images && (
                                                 <div className="mt-4 text-sm text-gray-600">
-                                                    Selected: {formData.images.name}
+                                                    Selected: {formData.images.name} ({formatFileSize(formData.images.size)})
                                                 </div>
                                             )}
                                             {errors.images && <p className="text-red-500 text-sm mt-1">{errors.images}</p>}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-gray-700 font-medium mb-2">Upload Citizenship ID</label>
+                                        <label className="block text-gray-700 font-medium mb-2">Upload Citizenship ID <span className="text-red-500">*</span></label>
                                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                                            <input name="citizenship_id" type="file" onChange={handleFileChange}
+                                            <input name="citizenship_id" type="file" onChange={handleFileChange} accept={ALLOWED_ID_TYPES.join(',')}
                                                 className="hidden" id="id-upload" />
                                             <label htmlFor="id-upload" className="cursor-pointer">
                                                 <div className="text-[#1C9FDD] mb-2">
@@ -420,11 +569,13 @@ const CreateCampaignForm = () => {
                                                     </svg>
                                                 </div>
                                                 <p className="text-gray-700 font-medium">Click to upload your ID</p>
-                                                <p className="text-gray-500 text-sm mt-1">This is required for verification purposes</p>
+                                                <p className="text-gray-500 text-sm mt-1">
+                                                    Accepted formats: JPG, PNG, PDF (Max: 2MB)
+                                                </p>
                                             </label>
                                             {formData.citizenship_id && (
                                                 <div className="mt-4 text-sm text-gray-600">
-                                                    Selected: {formData.citizenship_id.name}
+                                                    Selected: {formData.citizenship_id.name} ({formatFileSize(formData.citizenship_id.size)})
                                                 </div>
                                             )}
                                             {errors.citizenship_id && <p className="text-red-500 text-sm mt-1">{errors.citizenship_id}</p>}

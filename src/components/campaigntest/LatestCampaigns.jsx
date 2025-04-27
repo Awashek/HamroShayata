@@ -84,12 +84,6 @@ const LatestCampaigns = () => {
                 );
             })}
 
-            <Link
-                to="/campaigns"
-                className="block text-center text-[#1C9FDD] font-medium hover:underline py-2"
-            >
-                View all campaigns
-            </Link>
         </div>
     );
 };

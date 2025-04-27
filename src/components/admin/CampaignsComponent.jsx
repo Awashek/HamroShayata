@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import CampaignsFilter from "./CampaignsFilters";
+import CampaignsFilter from "../Admin/Filters/CampaignsFilters";
 import { useCampaigns } from "../../context/CampaignContext";
 import EditCampaignModal from "./EditCampaignModel";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
@@ -403,11 +403,17 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    User
+                                </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Title
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    User
+                                    Actions
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Campaign Image
@@ -427,75 +433,18 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Created At
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
+                                
+                                
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {currentCampaigns.map((campaign) => (
                                 <tr key={campaign.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {campaign.campaign_title}
-                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {campaign.user}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {campaign.images ? (
-                                            <button
-                                                onClick={() => handleViewItem("campaign", campaign.images)}
-                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
-                                            >
-                                                View Image
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-400">No image</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {campaign.description ? (
-                                            <button
-                                                onClick={() => handleViewItem("description", campaign.description)}
-                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
-                                            >
-                                                View Description
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-400">No description</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {campaign.citizenship_id ? (
-                                            <button
-                                                onClick={() => handleViewItem("citizenship", campaign.citizenship_id)}
-                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
-                                            >
-                                                View ID
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-400">No ID</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        Rs {campaign.goal_amount}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {formatDate(campaign.deadline)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {formatDateTime(campaign.created_at)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${campaign.status === "approved" ? "bg-green-100 text-green-800" :
-                                                campaign.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                                                    "bg-red-100 text-red-800"}`}>
-                                            {campaign.status}
-                                        </span>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {campaign.campaign_title}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2 items-center">
@@ -561,6 +510,61 @@ const CampaignsComponent = ({ campaigns: allCampaigns, loading }) => {
                                             )}
                                         </div>
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            ${campaign.status === "approved" ? "bg-green-100 text-green-800" :
+                                                campaign.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                                                    "bg-red-100 text-red-800"}`}>
+                                            {campaign.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {campaign.images ? (
+                                            <button
+                                                onClick={() => handleViewItem("campaign", campaign.images)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+                                            >
+                                                View Image
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400">No image</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {campaign.description ? (
+                                            <button
+                                                onClick={() => handleViewItem("description", campaign.description)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+                                            >
+                                                View Description
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400">No description</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {campaign.citizenship_id ? (
+                                            <button
+                                                onClick={() => handleViewItem("citizenship", campaign.citizenship_id)}
+                                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-200"
+                                            >
+                                                View ID
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400">No ID</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        Rs {campaign.goal_amount}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatDate(campaign.deadline)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatDateTime(campaign.created_at)}
+                                    </td>
+                                    
+                                  
                                 </tr>
                             ))}
                             {currentCampaigns.length === 0 && (

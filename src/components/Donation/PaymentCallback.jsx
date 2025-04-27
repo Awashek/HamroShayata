@@ -11,7 +11,6 @@ const PaymentCallback = () => {
     const [verificationAttempted, setVerificationAttempted] = useState(false);
 
     useEffect(() => {
-        // Only attempt verification once
         if (verificationAttempted) {
             return;
         }
